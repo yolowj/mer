@@ -141,4 +141,7 @@ public class ProductInfoResponse implements Serializable {
 
     @ApiModelProperty(value = "是否支持退款")
     private Boolean refundSwitch;
+
+    @ApiModelProperty(value = "额外赠送积分")
+    private Integer giftPoints;
 }
