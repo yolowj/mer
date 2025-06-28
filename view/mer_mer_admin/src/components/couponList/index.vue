@@ -85,7 +85,7 @@ export default {
   },
   data() {
     return {
-      listLoading: true,
+      listLoading: false,
       tableData: {
         data: [],
         total: 0,

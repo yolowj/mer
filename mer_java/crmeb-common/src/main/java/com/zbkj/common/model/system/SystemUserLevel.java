@@ -1,8 +1,10 @@
 package com.zbkj.common.model.system;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.zbkj.common.model.coupon.Coupon;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -12,6 +14,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * <p>
@@ -71,4 +74,12 @@ public class SystemUserLevel implements Serializable {
 
     @ApiModelProperty(value = "用户等级文字背景色")
     private String backColor;
+
+    @ApiModelProperty(value = "优惠券IDs")
+    private String couponIds;
+
+    @TableField(exist = false)
+    @ApiModelProperty(value = "优惠券IDs")
+    private List<Coupon> coupons;
+
 }

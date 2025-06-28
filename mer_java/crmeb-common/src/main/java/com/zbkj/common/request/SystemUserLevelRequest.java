@@ -1,5 +1,7 @@
 package com.zbkj.common.request;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.zbkj.common.model.coupon.Coupon;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -12,6 +14,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 系统会员等级请求对象
@@ -67,4 +71,8 @@ public class SystemUserLevelRequest implements Serializable {
 
     @ApiModelProperty(value = "积分比例")
     private BigDecimal integralRatio;
+
+    @ApiModelProperty(value = "优惠券")
+    @JsonInclude(JsonInclude.Include.ALWAYS) // 明确声明允许null（可选）
+    private List<Coupon> coupons = new ArrayList<>(); // 默认空列表
 }

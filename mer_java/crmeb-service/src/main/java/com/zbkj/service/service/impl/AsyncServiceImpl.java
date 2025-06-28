@@ -219,13 +219,13 @@ public class AsyncServiceImpl implements AsyncService {
             logger.error("异步——订单支付成功拆单处理 | 商户订单信息不存在,orderNo: {}", orderNo);
             return;
         }
-        Boolean execute;
-        if (merchantOrderList.size() == 1) {
-            // 单商户订单
-            execute = oneMerchantOrderProcessing(order, merchantOrderList.get(0));
-        } else {
-            execute = manyMerchantOrderProcessing(order, merchantOrderList);
-        }
+        Boolean execute =  manyMerchantOrderProcessing(order, merchantOrderList);;
+       // if (merchantOrderList.size() == 1) {
+       //     // 单商户订单
+       //     execute = oneMerchantOrderProcessing(order, merchantOrderList.get(0));
+       // } else {
+       //     execute = manyMerchantOrderProcessing(order, merchantOrderList);
+       // }
         if (!execute) {
             logger.error("异步——订单支付成功拆单处理 | 拆单处理失败，orderNo: {}", orderNo);
             return;
@@ -865,14 +865,15 @@ public class AsyncServiceImpl implements AsyncService {
         SystemUserLevel userLevel = systemUserLevelService.getByLevelId(user.getLevel());
         int count = orderService.count(new QueryWrapper<Order>().lambda().eq(Order::getUid, order.getUid()).ne(Order::getStatus, 9).eq(Order::getRefundStatus, 0));
 
-        presentIntegral(merchantOrderList, orderDetailList, order, user.getIsPaidMember(), userLevel, count <= 0);
+
         // 商户拆单
-        List<Order> newOrderList = CollUtil.newArrayList();
-        List<MerchantOrder> newMerchantOrderList = CollUtil.newArrayList();
-        List<OrderDetail> newOrderDetailList = CollUtil.newArrayList();
+        List<Order> newOrderList =  new ArrayList<>();
+        List<MerchantOrder> newMerchantOrderList = new ArrayList<>();
+        List<OrderDetail> newOrderDetailList = new ArrayList<>();
 
         order.setIsDel(true);
         for (MerchantOrder merchantOrder : merchantOrderList) {
+            presentIntegral(merchantOrder, orderDetailList, order, user.getIsPaidMember(), userLevel, count <= 0);
             Order newOrder = new Order();
             BeanUtils.copyProperties(order, newOrder);
             newOrder.setId(null);
@@ -891,9 +892,18 @@ public class AsyncServiceImpl implements AsyncService {
             newOrder.setPayPostage(merchantOrder.getPayPostage());
             newOrder.setGainIntegral(merchantOrder.getGainIntegral());
             newOrder.setLevel(OrderConstants.ORDER_LEVEL_MERCHANT);
-            newOrder.setStatus(OrderConstants.ORDER_STATUS_WAIT_SHIPPING);
+
             newOrder.setPlatOrderNo(order.getOrderNo());
             newOrder.setIsDel(false);
+
+            if (merchantOrder.getShippingType().equals(OrderConstants.ORDER_SHIPPING_TYPE_PICK_UP)
+                    && !order.getType().equals(OrderConstants.ORDER_TYPE_PITUAN)) { // 排除拼团订单
+                newOrder.setStatus(OrderConstants.ORDER_STATUS_AWAIT_VERIFICATION);
+            }
+            if(order.getType().equals(OrderConstants.ORDER_TYPE_PITUAN)){ // 拼团订单下单固定状态
+                newOrder.setGroupBuyRecordStatus(GroupBuyRecordEnum.GROUP_BUY_RECORD_ENUM_STATUS_INIT.getCode());
+            }
+
             newOrder.setStatus(OrderConstants.ORDER_STATUS_WAIT_SHIPPING);
             if (merchantOrder.getShippingType().equals(OrderConstants.ORDER_SHIPPING_TYPE_PICK_UP)) {
                 newOrder.setStatus(OrderConstants.ORDER_STATUS_AWAIT_VERIFICATION);
@@ -922,9 +932,10 @@ public class AsyncServiceImpl implements AsyncService {
                 e.setRollbackOnly();
                 return Boolean.FALSE;
             }
-            merchantOrderService.updateBatchById(merchantOrderList);
+            merchantOrderService.removeByIds(merchantOrderList);
             orderService.saveBatch(newOrderList);
             merchantOrderService.saveBatch(newMerchantOrderList);
+            orderDetailService.removeByIds(orderDetailList);
             orderDetailService.saveBatch(newOrderDetailList);
             // 订单日志
             orderStatusService.createLog(order.getOrderNo(), OrderStatusConstants.ORDER_STATUS_PAY_SPLIT, StrUtil.format(OrderStatusConstants.ORDER_LOG_MESSAGE_PAY_SPLIT, order.getOrderNo()));

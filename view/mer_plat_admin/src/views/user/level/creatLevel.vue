@@ -51,6 +51,22 @@
           step-strictly
         ></el-input-number>
       </el-form-item>
+      <el-form-item label="赠送优惠券：" prop="proCoupon" clearable>
+        <div class="acea-row">
+          <el-tag
+            v-for="(tag, index) in formValidate.coupons"
+            :key="index"
+            class="mr10 mb10"
+            :closable="!isDisabled"
+            :disable-transitions="false"
+            @close="handleCloseCoupon(tag)"
+          >
+            {{ tag.name }}
+          </el-tag>
+          <span class="mr15" v-if="formValidate.couponIds == null">无</span>
+          <el-button v-if="!isDisabled" size="small" class="mr15" @click="addCoupon">选择优惠券</el-button>
+        </div>
+      </el-form-item>
       <el-form-item label="文字颜色：" prop="backColor">
         <div class="acea-row">
           <el-color-picker
@@ -138,6 +154,7 @@ export default {
   },
   data() {
     return {
+      isDisabled: this.$route.params.isDisabled === '1' ? true : false,
       dialogVisible: false,
       formValidate: this.userInfo,
       loading: false,
@@ -206,9 +223,30 @@ export default {
         'user',
       );
     },
+    handleCloseCoupon(tag) {
+      this.formValidate.coupons.splice(this.formValidate.coupons.indexOf(tag), 1);
+      this.formValidate.couponIds.splice(this.formValidate.couponIds.indexOf(tag.id), 1);
+    },
     handleClose() {
       this.dialogVisible = false;
     },
+    addCoupon() {
+      const _this = this;
+      this.$modalCoupon(
+        'wu',
+        (this.keyNum += 1),
+        this.formValidate.coupons,
+        function (row) {
+          _this.$set(_this.formValidate, 'couponIds', []); // 确保响应式
+          _this.$set(_this.formValidate, 'coupons', row); // 确保响应式
+          row.map((item) => {
+            _this.formValidate.couponIds.push(item.id);
+          });
+        },
+        '',
+      );
+    },
+
     submitForm: Debounce(function (formName) {
       this.$refs.userRef.validate((valid) => {
         if (valid) {

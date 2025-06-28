@@ -1,12 +1,15 @@
 package com.zbkj.service.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zbkj.common.constants.UserLevelConstants;
 import com.zbkj.common.exception.CrmebException;
+import com.zbkj.common.model.coupon.Coupon;
 import com.zbkj.common.model.system.SystemUserLevel;
 import com.zbkj.common.request.SystemUserLevelRequest;
 import com.zbkj.common.request.SystemUserLevelRuleRequest;
@@ -14,6 +17,7 @@ import com.zbkj.common.request.SystemUserLevelUpdateShowRequest;
 import com.zbkj.common.result.CommonResultCode;
 import com.zbkj.common.result.SystemConfigResultCode;
 import com.zbkj.common.vo.SystemUserLevelConfigVo;
+import com.zbkj.service.dao.CouponDao;
 import com.zbkj.service.dao.SystemUserLevelDao;
 import com.zbkj.service.service.*;
 import org.springframework.beans.BeanUtils;
@@ -22,8 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * SystemUserLevelServiceImpl 接口实现
@@ -42,6 +46,8 @@ public class SystemUserLevelServiceImpl extends ServiceImpl<SystemUserLevelDao, 
 
     @Resource
     private SystemUserLevelDao dao;
+    @Resource
+    private CouponDao couponDao;
 
     @Autowired
     private SystemAttachmentService systemAttachmentService;
@@ -64,7 +70,31 @@ public class SystemUserLevelServiceImpl extends ServiceImpl<SystemUserLevelDao, 
         LambdaQueryWrapper<SystemUserLevel> levelLambdaQueryWrapper = new LambdaQueryWrapper<>();
         levelLambdaQueryWrapper.eq(SystemUserLevel::getIsDel, false);
         levelLambdaQueryWrapper.orderByAsc(SystemUserLevel::getGrade);
-        return dao.selectList(levelLambdaQueryWrapper);
+
+        List<SystemUserLevel> systemUserLevels =  dao.selectList(levelLambdaQueryWrapper);
+
+
+
+        for (SystemUserLevel resp:  systemUserLevels ) {
+            if (StrUtil.isBlank(resp.getCouponIds())) {
+                continue;
+            }
+
+            List<Integer> idList = Arrays.asList(resp.getCouponIds().split(",")).stream()
+                    .map(Integer::parseInt)  // 方法引用，等价于 .map(s -> Integer.parseInt(s))
+                    .collect(Collectors.toList());
+
+            List<Coupon> coupons = new ArrayList<>();
+            for (Integer id:  idList) {
+                LambdaQueryWrapper<Coupon> couponLambdaQueryWrapper = new LambdaQueryWrapper<>();
+                couponLambdaQueryWrapper.eq(Coupon::getId, id);
+                coupons.add(couponDao.selectOne(couponLambdaQueryWrapper)) ;
+            }
+            resp.setCoupons(coupons);
+        }
+
+
+        return systemUserLevels;
     }
 
     /**
@@ -87,6 +117,9 @@ public class SystemUserLevelServiceImpl extends ServiceImpl<SystemUserLevelDao, 
         systemUserLevel.setIsShow(true);
         systemUserLevel.setIcon(systemAttachmentService.clearPrefix(request.getIcon()));
         systemUserLevel.setBackImage(systemAttachmentService.clearPrefix(request.getBackImage()));
+        if(request.getCoupons()!=null){
+            systemUserLevel.setCouponIds(request.getCoupons().stream().map(Coupon::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        }
         return save(systemUserLevel);
     }
 
@@ -176,6 +209,9 @@ public class SystemUserLevelServiceImpl extends ServiceImpl<SystemUserLevelDao, 
         systemUserLevel.setIcon(systemAttachmentService.clearPrefix(request.getIcon()));
         systemUserLevel.setBackImage(systemAttachmentService.clearPrefix(request.getBackImage()));
         systemUserLevel.setUpdateTime(DateUtil.date());
+        if(request.getCoupons()!=null){
+            systemUserLevel.setCouponIds(request.getCoupons().stream().map(Coupon::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        }
         return transactionTemplate.execute(e -> {
             dao.updateById(systemUserLevel);
             // 修改等级级别或是经验值时，清除用户数据

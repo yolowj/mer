@@ -4,9 +4,15 @@
 /mer_java/crmeb-common/target/classes/com/zbkj/common/
 /mer_java/crmeb-common/crmeb-common.iml
 /mer_java/crmeb-front/crmeb-front.iml
+/mer_java/crmeb-front/target/classes/
 /mer_java/crmeb-service/target/classes/
 /mer_java/crmeb-service/crmeb-service.iml
 /mer_java/crmeb-generate/crmeb-generate.iml
 /mer_java/crmeb-admin/target/classes/
 /mer_java/crmeb-admin/crmeb-admin.iml
 *.log
+*.class
+/target/classes/
+
+**/.idea/**
+/.idea/

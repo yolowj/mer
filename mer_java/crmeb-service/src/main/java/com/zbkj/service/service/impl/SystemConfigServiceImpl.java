@@ -13,6 +13,8 @@ import com.zbkj.common.constants.SysConfigConstants;
 import com.zbkj.common.exception.CrmebException;
 import com.zbkj.common.model.system.SystemConfig;
 import com.zbkj.common.model.system.SystemFormTemp;
+import com.zbkj.common.model.system.SystemUserLevel;
+import com.zbkj.common.model.user.User;
 import com.zbkj.common.request.SaveConfigRequest;
 import com.zbkj.common.request.SystemConfigAdminRequest;
 import com.zbkj.common.request.SystemFormCheckRequest;
@@ -21,6 +23,8 @@ import com.zbkj.common.result.CommonResultCode;
 import com.zbkj.common.utils.RedisUtil;
 import com.zbkj.common.vo.MyRecord;
 import com.zbkj.service.dao.SystemConfigDao;
+import com.zbkj.service.dao.SystemUserLevelDao;
+import com.zbkj.service.dao.UserDao;
 import com.zbkj.service.service.SystemAttachmentService;
 import com.zbkj.service.service.SystemConfigService;
 import com.zbkj.service.service.SystemFormTempService;
@@ -31,6 +35,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +59,14 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigDao, System
 
     @Resource
     private SystemConfigDao dao;
+
+
+    @Resource
+    private SystemUserLevelDao systemUserLevelDao;
+
+
+    @Resource
+    private UserDao userDao;
 
     @Autowired
     private SystemFormTempService systemFormTempService;
@@ -369,6 +383,7 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigDao, System
         }
         return data.toString();
     }
+
 
     private SystemConfig getByName(String name) {
         PageHelper.clearPage();

@@ -8,6 +8,7 @@ import com.zbkj.common.request.SystemFormCheckRequest;
 import com.zbkj.common.vo.ExpressSheetVo;
 import com.zbkj.common.vo.MyRecord;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 
@@ -38,6 +39,8 @@ public interface SystemConfigService extends IService<SystemConfig> {
      * @return String
      */
     String getValueByKey(String key);
+
+
 
     /**
      * 保存或更新配置数据
