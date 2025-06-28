@@ -112,4 +112,7 @@ public class CouponAdminDetailResponse implements Serializable {
 
     @ApiModelProperty(value = "会员等级")
     private Integer userLevel;
+
+    @ApiModelProperty(value = "叠加类型集合")
+    private List<String> mulType;
 }

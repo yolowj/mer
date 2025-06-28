@@ -202,24 +202,7 @@ public class FrontOrderServiceImpl implements FrontOrderService {
         int orderProNum = orderInfoList.stream().mapToInt(PreOrderInfoDetailVo::getPayNum).sum();
         preOrderInfoVo.setOrderProNum(orderProNum);
 
-        // 运费计算
-        if (preOrderInfoVo.getSecondType().equals(OrderConstants.ORDER_SECOND_TYPE_CLOUD)
-                || preOrderInfoVo.getSecondType().equals(OrderConstants.ORDER_SECOND_TYPE_CDKEY)
-                || preOrderInfoVo.getSecondType().equals(OrderConstants.ORDER_SECOND_TYPE_VIRTUALLY)) {
-            preOrderInfoVo.setFreightFee(BigDecimal.ZERO);
-            preOrderInfoVo.setAddressId(0);
-        } else {
-            // 获取默认地址
-            UserAddress userAddress = userAddressService.getDefaultByUid(user.getId());
-            if (ObjectUtil.isNotNull(userAddress)) {
-                // 计算运费
-                getFreightFee_V_1_8(preOrderInfoVo, userAddress, user.getIsPaidMember());
-                preOrderInfoVo.setAddressId(userAddress.getId());
-            } else {
-                preOrderInfoVo.setFreightFee(BigDecimal.ZERO);
-                preOrderInfoVo.setAddressId(0);
-            }
-        }
+
         // 实际支付金额
         preOrderInfoVo.setSvipDiscountPrice(BigDecimal.ZERO);
         if (user.getIsPaidMember() && preOrderInfoVo.getType().equals(OrderConstants.ORDER_TYPE_BASE)) {
@@ -289,6 +272,28 @@ public class FrontOrderServiceImpl implements FrontOrderService {
     }
 
     private void preOrderSetCouponPrice(PreOrderInfoVo preOrderInfoVo, List<PreOrderInfoDetailVo> orderInfoList, User user) {
+
+
+
+        // 运费计算
+        if (preOrderInfoVo.getSecondType().equals(OrderConstants.ORDER_SECOND_TYPE_CLOUD)
+                || preOrderInfoVo.getSecondType().equals(OrderConstants.ORDER_SECOND_TYPE_CDKEY)
+                || preOrderInfoVo.getSecondType().equals(OrderConstants.ORDER_SECOND_TYPE_VIRTUALLY)) {
+            preOrderInfoVo.setFreightFee(BigDecimal.ZERO);
+            preOrderInfoVo.setAddressId(0);
+        } else {
+            // 获取默认地址
+            UserAddress userAddress = userAddressService.getDefaultByUid(user.getId());
+            if (ObjectUtil.isNotNull(userAddress)) {
+                // 计算运费
+                getFreightFee_V_1_8(preOrderInfoVo, userAddress, user.getIsPaidMember());
+                preOrderInfoVo.setAddressId(userAddress.getId());
+            }/* else {
+                throw new CrmebException("请先添加地址");
+            }*/
+        }
+
+
         // 自动领券计算
         BigDecimal couponPrice = BigDecimal.ZERO;
         List<Integer> proIdsList = orderInfoList.stream().map(PreOrderInfoDetailVo::getProductId).distinct().collect(Collectors.toList());

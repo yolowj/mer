@@ -13,6 +13,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 优惠券编辑请求对象
@@ -83,4 +84,7 @@ public class CouponUpdateRequest implements Serializable {
 
     @ApiModelProperty(value = "会员等级")
     private Integer userLevel;
+
+    @ApiModelProperty(value = "叠加类型集合")
+    private List<String> mulType;
 }

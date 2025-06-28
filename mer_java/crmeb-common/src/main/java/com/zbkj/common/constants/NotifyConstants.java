@@ -57,4 +57,9 @@ public class NotifyConstants {
     /** 商户入驻平台管理提醒 */
     public static final String MERCHANT_SETTLED_APPLY = "merchantSettledApply";
 
+
+
+    /** 生日礼标记 */
+    public static final String MEMBERS_DAY = "memberDays";
+
 }

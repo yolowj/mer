@@ -38,6 +38,7 @@ import com.zbkj.common.vo.CouponSimpleVo;
 import com.zbkj.common.vo.SimpleProductVo;
 import com.zbkj.service.dao.CouponDao;
 import com.zbkj.service.service.*;
+import jodd.util.StringUtil;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -516,6 +517,10 @@ public class CouponServiceImpl extends ServiceImpl<CouponDao, Coupon> implements
         } else {
             response.setIssuedNum(coupon.getLastTotal());
         }
+        if(StringUtil.isNotBlank(coupon.getMulType())){
+            response.setMulType(Arrays.asList(coupon.getMulType().split(",").clone()));
+        }
+
         // 获取使用数量
         response.setUsedNum(couponUserService.getUsedNumByCouponId(coupon.getId()));
         // 获取关联数据
@@ -985,6 +990,10 @@ public class CouponServiceImpl extends ServiceImpl<CouponDao, Coupon> implements
         if (!coupon.getCategory().equals(CouponConstants.COUPON_CATEGORY_UNIVERSAL)) {
             update.set("linked_data", request.getLinkedData());
         }
+        if(ObjectUtil.isNotNull(request.getMulType())){
+            update.set("mul_type",String.join(",",request.getMulType()));
+        }
+
         update.set("user_level", request.getUserLevel());
         update.set("is_repeated", request.getIsRepeated());
         update.eq("id", coupon.getId());

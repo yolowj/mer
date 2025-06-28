@@ -81,6 +81,12 @@
               </div>
             </template>
           </el-table-column>
+
+          <el-table-column prop="name" label="倍率" :show-overflow-tooltip="true" min-width="160">
+            <template slot-scope="scope">
+              <span>{{ scope.row.multiple  }}</span>
+            </template>
+          </el-table-column>
           <el-table-column
             prop="message"
             label="权益简介"

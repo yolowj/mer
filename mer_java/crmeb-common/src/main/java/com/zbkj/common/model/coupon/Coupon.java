@@ -113,4 +113,9 @@ public class Coupon implements Serializable {
 
     @ApiModelProperty(value = "会员等级")
     private Integer userLevel;
+
+
+    @ApiModelProperty(value = "可叠加类型")
+    private String mulType;
+
 }

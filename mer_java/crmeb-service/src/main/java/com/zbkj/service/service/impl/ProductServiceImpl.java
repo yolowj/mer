@@ -30,6 +30,7 @@ import com.zbkj.common.model.merchant.MerchantInfo;
 import com.zbkj.common.model.product.*;
 import com.zbkj.common.model.seckill.SeckillActivity;
 import com.zbkj.common.model.system.SystemForm;
+import com.zbkj.common.model.user.User;
 import com.zbkj.common.page.CommonPage;
 import com.zbkj.common.request.*;
 import com.zbkj.common.request.merchant.MerchantProductSearchRequest;
@@ -3819,11 +3820,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductDao, Product>
      */
     @Override
     public PageInfo<IntegralProductPageResponse> getIntegralProductPageByPlat(IntegralProductPageSearchRequest request) {
+        User user = userService.getInfo();
         LambdaQueryWrapper<Product> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Product::getMerId, 0);
         lqw.eq(Product::getIsShow, request.getIsShow());
         lqw.eq(Product::getIsDel, 0);
         lqw.eq(Product::getType, ProductConstants.PRODUCT_TYPE_INTEGRAL);
+        lqw.gt(Product::getUserLevel,user.getLevel());
+
         //关键字搜索
         if (StrUtil.isNotBlank(request.getKeywords())) {
             String keywords = URLUtil.decode(request.getKeywords());

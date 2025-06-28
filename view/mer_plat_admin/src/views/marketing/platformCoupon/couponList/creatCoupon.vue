@@ -30,7 +30,7 @@
               />
             </el-form-item>
             <el-form-item label="券类型：" prop="couponType">
-              <el-radio-group v-model="formValidate.couponType" :disabled="isEdit && !isCopy">
+              <el-radio-group v-model="formValidate.couponType" :disabled="isEdit && !isCopy" @change="changeMoney">
                 <el-radio :label="1">满减券</el-radio>
                 <el-radio :label="3">包邮券</el-radio>
               </el-radio-group>
@@ -193,6 +193,22 @@
                 不可重复领取，若多个营销活动赠送同一优惠券，一个用户只能领取1张
               </p>
             </el-form-item>
+
+
+
+
+            <el-form-item label="叠加方案：" prop="mulType">
+              <el-select v-model="formValidate.mulType" placeholder="请选择标签" filterable multiple >
+                <el-option :value="item.name" v-for="(item, index) in mulTypes" :key="index" :label="item.value"></el-option>
+              </el-select>
+              <p  class="desc mt10">
+                不勾选则不可与任意叠加
+              </p>
+            </el-form-item>
+
+
+
+
             <el-form-item label="是否开启:">
               <el-switch
                 :width="56"
@@ -371,6 +387,7 @@ export default {
         status: false,
         validityTime: [], //使用有效期
         collectionTime: [], //领取时间
+        mulType: [],
       },
       pickerOptionsForEditCoupon: {
         // 时间有效校验
@@ -378,6 +395,14 @@ export default {
           return time.getTime() < Date.now() - 8.64e7;
         },
       },
+      mulTypes: [
+        {name:"1" , value: "商家券"},
+        {name:"2" , value: "商品券"},
+        {name:"3" , value: "通用券"},
+        {name:"4" , value: "品类券"},
+        {name:"5" , value: "品牌券"},
+        {name:"6" , value: "跨店券"}
+      ],
       ruleValidate: {
         name: [{ required: true, message: '请输入优惠券名称' }],
         money: [{ required: true, message: '请输入优惠券面值' }],
@@ -498,6 +523,7 @@ export default {
       this.formValidate.useStartTime = e ? e[0] : '';
       this.formValidate.useEndTime = e ? e[1] : '';
     },
+
     // 领取时间
     onChangeCollectionTime(e) {
       this.formValidate.collectionTime = e;
@@ -510,6 +536,16 @@ export default {
     // 获取商户id
     getMerId(id) {
       this.merIds = id;
+    },
+    changeMoney(){
+      console.log('error submit!!');
+
+      if(this.formValidate.couponType ==  3){
+        this.$set(this.formValidate, 'money', 8);
+      }else {
+        this.$set(this.formValidate, 'money', 1);
+      }
+
     },
     addGoods() {
       const _this = this;

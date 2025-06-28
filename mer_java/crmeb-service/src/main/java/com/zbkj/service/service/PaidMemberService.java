@@ -54,4 +54,9 @@ public interface PaidMemberService {
      * 会员过期处理
      */
     void memberExpirationProcessing();
+
+    /**
+     * 会员日提醒
+     */
+    void memberHappyProcsssing();
 }

@@ -211,7 +211,18 @@
                   }}
                 </div>
               </li>
+
+              <li class="item">
+                <div class="tips">叠加方式：</div>
+                <div v-if="cell.mulType==null">不可叠加</div>
+                <div v-for="(item, index) in cell.mulType" :key="index" class="select-item">
+                  <div class="value">{{ item | mulTypes }};</div>
+                </div>
+              </li>
+
+
             </ul>
+
           </div>
           <div class="detailSection">
             <div class="title">优惠券情况</div>
@@ -324,7 +335,19 @@ export default {
         3: '包邮券',
       };
       return typeObj[val];
-    }
+    },
+
+    mulTypes(val) {
+      const typeObj = {
+        1: '商家券',
+        2: '商品券',
+        3: '通用券',
+        4: '品类券',
+        5: '品牌券',
+        6: '跨店券'
+      };
+      return typeObj[val];
+    },
   },
   mounted() {
     if (checkPermi(['platform:coupon:page:list'])) this.getList(1);

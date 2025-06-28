@@ -15,11 +15,18 @@ import com.zbkj.common.vo.MyRecord;
 import com.zbkj.common.vo.PaidMemberBenefitsVo;
 import com.zbkj.common.vo.PaidMemberConfigVo;
 import com.zbkj.service.service.*;
+import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.common.api.WxConsts;
+import me.chanjar.weixin.common.error.WxErrorException;
+import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.bean.WxMpMassTagMessage;
+import me.chanjar.weixin.mp.bean.result.WxMpMassSendResult;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -37,6 +44,7 @@ import java.util.List;
  * +----------------------------------------------------------------------
  */
 @Service
+@Slf4j
 public class PaidMemberServiceImpl implements PaidMemberService {
 
     @Autowired
@@ -185,6 +193,59 @@ public class PaidMemberServiceImpl implements PaidMemberService {
             throw new CrmebException("会员过期处理失败");
         }
     }
+
+
+    @Autowired
+    private WxMpService wxMpService;
+
+
+    /**
+     * 会员日提醒
+     */
+    @Override
+    public void memberHappyProcsssing() {
+        boolean  isVipDay = false ;
+        try {
+            // 获取会员日配置
+            String vipDaySwitch = systemConfigService.getValueByKey("vip_day_switch");
+            String vipDayDates = systemConfigService.getValueByKey("vip_day_dates");
+
+            // 检查开关和日期配置
+            if ("true".equals(vipDaySwitch) && StrUtil.isNotBlank(vipDayDates) ) {
+                // 获取当前日期
+                Integer vipMonth = LocalDate.now().getDayOfMonth();
+                Integer vipWeek = LocalDate.now().getDayOfWeek().getValue();
+                String v1 = vipDayDates.split(",")[0];
+                if(Integer.parseInt(v1)==vipMonth) isVipDay = true;
+                // 检查今天是否是会员日
+                if(vipDayDates.split(",").length>1){
+                    String v2 = vipDayDates.split(",")[1];
+                    if(Integer.parseInt(v2)==vipWeek) isVipDay = true;
+                }
+            }
+        } catch (Exception e) {
+            log.error("会员日配置错误", e);
+        }
+        if(isVipDay){
+            // 构建图文消息(需先上传素材)
+            WxMpMassTagMessage massMessage = new WxMpMassTagMessage();
+            massMessage.setTagId(Long.parseLong("0")); // 0表示所有用户
+            massMessage.setMsgType(WxConsts.MassMsgType.MPNEWS);
+            massMessage.setContent("会员日，折扣活动提醒");
+            try {
+                // 执行群发
+                WxMpMassSendResult result = wxMpService.getMassMessageService().massGroupMessageSend(massMessage);
+                System.out.println("广播消息ID: " + result.getMsgId());
+            } catch (WxErrorException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+    }
+
+
+
 }
 
 

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -35,6 +36,7 @@ import com.zbkj.common.utils.CrmebUtil;
 import com.zbkj.common.utils.RedisUtil;
 import com.zbkj.service.dao.CartDao;
 import com.zbkj.service.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,10 +67,15 @@ import java.util.stream.Collectors;
  * +----------------------------------------------------------------------
  */
 @Service
+@Slf4j
 public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartService {
 
     @Resource
     private CartDao dao;
+
+    @Autowired
+    private SystemConfigService systemConfigService;
+
 
     @Autowired
     private ProductService productService;
@@ -513,6 +524,36 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
         BigDecimal proTotalPrice = BigDecimal.ZERO;
         List<Product> productList = new ArrayList<>();
         List<ProductPriceCalculateDto> dtoList = new ArrayList<>();
+
+        boolean isVipDay = false;
+        BigDecimal vipDayMultiple = new BigDecimal("1.00"); // 默认不翻倍
+
+        try {
+            // 获取会员日配置
+            String vipDaySwitch = systemConfigService.getValueByKey("vip_day_switch");
+            String vipDayDates = systemConfigService.getValueByKey("vip_day_dates");
+            String vip_day_discount = "0.88";//systemConfigService.getValueByKey("vip_day_discount");
+
+            // 检查开关和日期配置
+            if ("true".equals(vipDaySwitch) && StrUtil.isNotBlank(vipDayDates) && StrUtil.isNotBlank(vip_day_discount)) {
+                // 解析倍数配置
+                vipDayMultiple = new BigDecimal(vip_day_discount);
+                // 获取当前日期
+                Integer vipMonth = LocalDate.now().getDayOfMonth();
+                Integer vipWeek = LocalDate.now().getDayOfWeek().getValue();
+                // 检查今天是否是会员日
+                if(vipDayDates.split(",").length>1){
+                    String v1 = vipDayDates.split(",")[0];
+                    String v2 = vipDayDates.split(",")[1];
+                    if(Integer.parseInt(v1)==vipMonth) isVipDay = true;
+                    if(Integer.parseInt(v2)==vipWeek) isVipDay = true;
+                }
+            }
+        } catch (Exception e) {
+            log.error("会员日配置错误", e);
+        }
+
+
         for (Cart cart : cartList) {
             if (!cart.getStatus()) {
                 throw new CrmebException(CommonResultCode.VALIDATE_FAILED, "购物扯商品状态异常，请重新选择商品");
@@ -544,7 +585,9 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
             attrValueMap.put(attrValue.getId(), attrValue);
 
             totalPrice = totalPrice.add(attrValue.getPrice().multiply(new BigDecimal(cart.getCartNum().toString())));
-            if (product.getIsPaidMember() && user.getIsPaidMember()) {
+            if(isVipDay){
+                proTotalPrice = proTotalPrice.add(attrValue.getPrice().multiply(new BigDecimal(cart.getCartNum().toString())).multiply(vipDayMultiple).setScale(2, RoundingMode.HALF_DOWN));
+            }else if (product.getIsPaidMember() && user.getIsPaidMember()) {
                 proTotalPrice = proTotalPrice.add(attrValue.getVipPrice().multiply(new BigDecimal(cart.getCartNum().toString())));
             } else {
                 proTotalPrice = proTotalPrice.add(attrValue.getPrice().multiply(new BigDecimal(cart.getCartNum().toString())));
@@ -567,7 +610,7 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
         for (Map.Entry<Integer, List<Cart>> entry : merCartMap.entrySet()) {
             Integer merId = entry.getKey();
             List<Cart> carts = entry.getValue();
-            BigDecimal merProTotalPrice = BigDecimal.ZERO;
+            BigDecimal merProTotalPrice = BigDecimal.ZERO;    //会员日 和 会员价之后的总价格
             for (Cart cart : carts) {
                 ProductAttrValue attrValue = attrValueMap.get(cart.getProductAttrUnique());
                 BigDecimal multiply;
@@ -579,7 +622,7 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
                 merProTotalPrice = merProTotalPrice.add(multiply);
             }
             List<Integer> merProIdList = carts.stream().map(Cart::getProductId).distinct().collect(Collectors.toList());
-            List<Coupon> merCouponList = couponService.findManyByMerIdAndMoney(merId, merProIdList, merProTotalPrice);
+            List<Coupon> merCouponList = couponService.findManyByMerIdAndMoney(merId, merProIdList, merProTotalPrice);  //可以用的券
             if (CollUtil.isNotEmpty(merCouponList)) {
                 for (int i = 0; i < merCouponList.size(); ) {
                     Coupon coupon = merCouponList.get(i);
