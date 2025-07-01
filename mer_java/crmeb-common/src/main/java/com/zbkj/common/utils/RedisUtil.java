@@ -9,11 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +43,35 @@ public class RedisUtil {
     @Autowired
     public RedisUtil(RedisConnectionFactory redisConnectionFactory) {
         this.redisConnectionFactory = redisConnectionFactory;
+    }
+
+    /**
+     * 执行Lua脚本
+     * @param script Lua脚本
+     * @param keys 键列表
+     * @param args 参数列表
+     * @return 执行结果
+     */
+    public Object executeLuaScript(String script, String key, Object... args) {
+        RedisScript<Long> redisScript = new DefaultRedisScript<>(script, Long.class);
+        return getRedisTemplate().execute(redisScript, Collections.singletonList(key), args);
+    }
+
+    /**
+     * 原子设置键值（如果不存在）
+     * @param key 键
+     * @param value 值
+     * @param timeout 超时时间
+     * @param unit 时间单位
+     * @return 是否设置成功
+     */
+    public Boolean setIfAbsent(String key, Object value, long timeout, TimeUnit unit) {
+        try {
+            return getRedisTemplate().opsForValue().setIfAbsent(key, value, timeout, unit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public RedisTemplate<String, Object> getRedisTemplate() {
@@ -692,5 +724,8 @@ public class RedisUtil {
         ZSetOperations<String, Object> zset = getRedisTemplate().opsForZSet();
         return zset.rangeByScore(key, score, score1);
     }
+
+
+
 
 }

@@ -17,8 +17,10 @@ import com.zbkj.common.model.user.UserIntegralRecord;
 import com.zbkj.common.request.PageParamRequest;
 import com.zbkj.common.request.SignConfigRequest;
 import com.zbkj.common.request.SignRecordSearchRequest;
+import com.zbkj.common.request.SupSignRequest;
 import com.zbkj.common.response.SignConfigResponse;
 import com.zbkj.common.response.SignPageInfoResponse;
+import com.zbkj.common.response.SupSignResponse;
 import com.zbkj.common.response.UserSignRecordResponse;
 import com.zbkj.common.vo.PaidMemberBenefitsVo;
 import com.zbkj.service.service.*;
@@ -160,6 +162,21 @@ public class SignServiceImpl implements SignService {
     @Override
     public SignPageInfoResponse getPageInfo(String month) {
         User user = userService.getInfo();
+        List<UserSignRecord> signRecordList = userSignRecordService.findByMonth(user.getId(), month);
+        List<String> signDateStrList = signRecordList.stream().map(UserSignRecord::getDate).collect(Collectors.toList());
+        SignPageInfoResponse response = new SignPageInfoResponse();
+        response.setSignDateList(signDateStrList);
+        return response;
+    }
+
+
+    /**
+     * 获取签到页信息
+     * @return 签到页信息
+     */
+    @Override
+    public SignPageInfoResponse execute() {
+        User user = userService.getInfo();
         DateTime date = DateUtil.date();
         String todayStr = date.toString(DateConstants.DATE_FORMAT_DATE);
         // 是否签到提示
@@ -169,22 +186,11 @@ public class SignServiceImpl implements SignService {
         if (ObjectUtil.isNull(lastSignRecord) || !lastSignRecord.getDate().equals(todayStr)) {
             lastSignRecord = sign(todayStr, user, lastSignRecord);
             isTip = true;
+        }else {
+            throw new CrmebException("今天已经签到过啦~！");
         }
-        //获取月签到记录
-        String nowMonth = date.toString(DateConstants.DATE_FORMAT_MONTH);
-        if (StrUtil.isNotBlank(month) && !nowMonth.equals(month)) {
-            String lastMonthStr = DateUtil.offsetMonth(DateUtil.beginOfMonth(date), -1).toString(DateConstants.DATE_FORMAT_MONTH);
-            if (!lastMonthStr.equals(month)) {
-                throw new CrmebException("只能查看当前月及上月的签到日历");
-            }
-        }
-        if (StrUtil.isBlank(month)) {
-            month = nowMonth;
-        }
-        List<UserSignRecord> signRecordList = userSignRecordService.findByMonth(user.getId(), month);
-        List<String> signDateStrList = signRecordList.stream().map(UserSignRecord::getDate).collect(Collectors.toList());
+
         SignPageInfoResponse response = new SignPageInfoResponse();
-        response.setSignDateList(signDateStrList);
         response.setSignDayNum(lastSignRecord.getDay());
         response.setIntegral(lastSignRecord.getIntegral() + lastSignRecord.getAwardIntegral());
         response.setExperience(lastSignRecord.getExperience() + lastSignRecord.getAwardExperience());
@@ -193,6 +199,7 @@ public class SignServiceImpl implements SignService {
         response.setIsTip(isTip);
         return response;
     }
+
 
     /**
      * 获取移动端签到记录列表
@@ -364,7 +371,7 @@ public class SignServiceImpl implements SignService {
     }
 
     @Override
-    public SignPageInfoResponse retroactiveSign(String date, String month) {
+    public SupSignResponse retroactiveSign(String date, String month) {
         User user = userService.getInfo();
         // 1. 参数校验
         try {
@@ -545,17 +552,11 @@ public class SignServiceImpl implements SignService {
         if (finalExperience > 0) {
             asyncService.userLevelUp(user.getId(), user.getLevel(), user.getExperience() + finalExperience);
         }
-        UserSignRecord lastSignRecord = userSignRecordService.getLastByUid(user.getId());
-        List<UserSignRecord> signRecordList = userSignRecordService.findByMonth(user.getId(), month);
-        List<String> signDateStrList = signRecordList.stream().map(UserSignRecord::getDate).collect(Collectors.toList());
-        SignPageInfoResponse response = new SignPageInfoResponse();
-        response.setSignDateList(signDateStrList);
-        response.setSignDayNum(lastSignRecord.getDay());
-        response.setIntegral(lastSignRecord.getIntegral() + lastSignRecord.getAwardIntegral());
-        response.setExperience(lastSignRecord.getExperience() + lastSignRecord.getAwardExperience());
-        String signRule = systemConfigService.getValueByKey(SysConfigConstants.CONFIG_SIGN_RULE_DESCRIPTION);
-        response.setSignRule(signRule);
-        response.setIsTip(false);
+        //UserSignRecord lastSignRecord = userSignRecordService.getLastByUid(user.getId());
+        SupSignResponse response = new SupSignResponse();
+        response.setSignDayNum(continuousDays + 1);
+        response.setMakeupCards(maxTimes-usedTimes-1);
+
         return response;
     }
 

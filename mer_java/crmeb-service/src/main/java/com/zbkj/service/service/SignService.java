@@ -7,6 +7,7 @@ import com.zbkj.common.request.SignConfigRequest;
 import com.zbkj.common.request.SignRecordSearchRequest;
 import com.zbkj.common.response.SignConfigResponse;
 import com.zbkj.common.response.SignPageInfoResponse;
+import com.zbkj.common.response.SupSignResponse;
 import com.zbkj.common.response.UserSignRecordResponse;
 
 /**
@@ -70,6 +71,14 @@ public interface SignService {
      */
     SignPageInfoResponse getPageInfo(String month);
 
+
+    /**
+     * 执行签到
+     * @param month 月份 yyyy-MM
+     * @return 签到页信息
+     */
+    SignPageInfoResponse execute();
+
     /**
      * 获取移动端签到记录列表
      * @param pageParamRequest 分页参数
@@ -83,6 +92,6 @@ public interface SignService {
      * @param month 补签的月份
      * @return 是否补签成功
      */
-    SignPageInfoResponse retroactiveSign(String date, String month);
+    SupSignResponse retroactiveSign(String date, String month);
 
 }

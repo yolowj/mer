@@ -1,9 +1,7 @@
-package com.zbkj.common.model.prize;
+package com.zbkj.common.response;
 
-import com.baomidou.mybatisplus.annotation.IdType;
+
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -15,24 +13,25 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * <p>
- * 抽奖设置
- * </p>
- *
- * @author berton
- * @since 2025-06-26
+ * 订单号响应对象
+ * +----------------------------------------------------------------------
+ * | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
+ * +----------------------------------------------------------------------
+ * | Copyright (c) 2016~2025 https://www.crmeb.com All rights reserved.
+ * +----------------------------------------------------------------------
+ * | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
+ * +----------------------------------------------------------------------
+ * | Author: CRMEB Team <admin@crmeb.com>
+ * +----------------------------------------------------------------------
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("eb_prize_draw")
-@ApiModel(value="PrizeDraw对象", description="抽奖设置")
-public class PrizeDraw implements Serializable {
+@ApiModel(value="PrizeDrawResponse对象", description="抽奖响应对象")
+public class PrizeDrawResponse implements Serializable {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
 
     @ApiModelProperty(value = "1：商品，2：优惠券，3：积分，4：谢谢惠顾")
     private Integer type;
@@ -49,10 +48,8 @@ public class PrizeDraw implements Serializable {
     @ApiModelProperty(value = "是否显示")
     private Integer status;
 
-    @ApiModelProperty(value = "奖品数量")
+    @ApiModelProperty(value = "数量")
     private Integer num;
-
-    private Date createTime;
 
 
     @TableField(exist = false)

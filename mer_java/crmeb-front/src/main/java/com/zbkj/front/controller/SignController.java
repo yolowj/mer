@@ -3,7 +3,9 @@ package com.zbkj.front.controller;
 import com.zbkj.common.model.sgin.UserSignRecord;
 import com.zbkj.common.page.CommonPage;
 import com.zbkj.common.request.PageParamRequest;
+import com.zbkj.common.request.SupSignRequest;
 import com.zbkj.common.response.SignPageInfoResponse;
+import com.zbkj.common.response.SupSignResponse;
 import com.zbkj.common.result.CommonResult;
 import com.zbkj.service.service.SignService;
 import io.swagger.annotations.Api;
@@ -11,10 +13,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 /**
@@ -50,11 +49,16 @@ public class SignController {
         return CommonResult.success(signService.getPageInfo(month));
     }
 
+    @ApiOperation(value = "执行签到")
+    @RequestMapping(value = "/execute", method = RequestMethod.POST)
+    public CommonResult<SignPageInfoResponse> execute() {
+        return CommonResult.success(signService.execute());
+    }
+
     @ApiOperation(value = "补签")
     @RequestMapping(value = "/retroactiveSign", method = RequestMethod.POST)
-    public CommonResult<SignPageInfoResponse> retroactiveSign(@RequestParam(value = "day", defaultValue = "", required = false) String day,
-                                                @RequestParam(value = "month", defaultValue = "", required = false) String month) {
-        return CommonResult.success(signService.retroactiveSign(day, month));
+    public CommonResult<SupSignResponse> retroactiveSign(@RequestBody @Validated SupSignRequest request) {
+        return CommonResult.success(signService.retroactiveSign(request.getDay(), request.getMonth()));
     }
 
 }

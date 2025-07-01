@@ -49,6 +49,9 @@ public class CouponConstants {
     public static final Integer COUPON_TYPE_SATISFY = 1;
     /** 优惠券类型—折扣券 */
     public static final Integer COUPON_TYPE_DISCOUNT = 2;
+    /** 优惠券类型—折扣券 */
+    public static final Integer COUPON_TYPE_FREEADD = 3;
+
 
 
     /**
