@@ -79,7 +79,7 @@ public class PrizeDrawController {
         PrizeDraw prizeDraw = new PrizeDraw();
         BeanUtils.copyProperties(prizeDrawRequest, prizeDraw);
         prizeDraw.setCreateTime(new Date());
-        if(prizeDrawService.save(prizeDraw)) {
+        if(prizeDrawService.saveOrUpdate(prizeDraw)) {
             return CommonResult.success();
         } else {
             return CommonResult.failed();
@@ -135,41 +135,6 @@ public class PrizeDrawController {
         PrizeDraw prizeDraw = prizeDrawService.getById(id);
         return CommonResult.success(prizeDraw);
     }
-
-
-/*    *//**
-     * 开始抽奖
-     * @param id Integer
-     * @author berton
-     * @since 2025-06-26
-     *//*
-    @ApiOperation(value = "开始抽奖")
-    @RequestMapping(value = "/lottery", method = RequestMethod.GET)
-    public CommonResult<PrizeDraw> lottery(@RequestBody @Validated UserRequest request) {
-        PrizeDraw prizeDraw = prizeDrawService.draw(request);
-        return CommonResult.success(prizeDraw);
-    }*/
-
-
-    @Autowired
-    private UserDao userDao;
-
-
-/**
-     * 领奖
-     * @param id Integer
-     * @author berton
-     * @since 2025-06-26
-     */
-
-    @ApiOperation(value = "开始抽奖")
-    @RequestMapping(value = "/lottery/get", method = RequestMethod.GET)
-    public CommonResult<PrizeDraw> getPrize(@RequestParam(value = "id") Integer id) {
-
-        PrizeDraw prizeDraw = prizeDrawService.draw(id);
-        return CommonResult.success(prizeDraw);
-    }
-
 
 
 

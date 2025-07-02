@@ -777,7 +777,8 @@ public class AsyncServiceImpl implements AsyncService {
      * @param order             主订单
      * @param merchantOrderList 商户订单列表
      */
-    private Boolean manyMerchantOrderProcessing(Order order, List<MerchantOrder> merchantOrderList) {
+    @Override
+    public Boolean manyMerchantOrderProcessing(Order order, List<MerchantOrder> merchantOrderList) {
         List<OrderDetail> orderDetailList = orderDetailService.getByOrderNo(order.getOrderNo());
         User user = userService.getById(order.getUid());
         // 赠送积分积分处理：1.下单赠送积分

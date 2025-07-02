@@ -1,5 +1,7 @@
 package com.zbkj.service.service;
 
+import com.zbkj.common.model.order.MerchantOrder;
+import com.zbkj.common.model.order.Order;
 import com.zbkj.common.model.order.RechargeOrder;
 import com.zbkj.common.model.user.User;
 
@@ -121,4 +123,6 @@ public interface AsyncService {
      * @param orderNo 订单编号
      */
     void verifyOrderWechatSendUploadShipping(String orderNo);
+
+    Boolean manyMerchantOrderProcessing(Order order, List<MerchantOrder> merchantOrderList);
 }

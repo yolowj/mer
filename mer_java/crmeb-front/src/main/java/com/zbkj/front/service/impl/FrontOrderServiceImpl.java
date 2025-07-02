@@ -7,6 +7,8 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.github.pagehelper.PageInfo;
 import com.zbkj.common.config.CrmebConfig;
 import com.zbkj.common.constants.*;
@@ -25,10 +27,13 @@ import com.zbkj.common.model.groupbuy.GroupBuyRecord;
 import com.zbkj.common.model.groupbuy.GroupBuyUser;
 import com.zbkj.common.model.merchant.Merchant;
 import com.zbkj.common.model.order.*;
+import com.zbkj.common.model.prize.LotteryRecord;
+import com.zbkj.common.model.prize.PrizeDraw;
 import com.zbkj.common.model.product.Product;
 import com.zbkj.common.model.product.ProductAttrValue;
 import com.zbkj.common.model.product.ProductCategory;
 import com.zbkj.common.model.product.ProductReply;
+import com.zbkj.common.model.seckill.SeckillActivity;
 import com.zbkj.common.model.seckill.SeckillProduct;
 import com.zbkj.common.model.system.SystemForm;
 import com.zbkj.common.model.user.User;
@@ -158,6 +163,8 @@ public class FrontOrderServiceImpl implements FrontOrderService {
     private GroupBuyUserService groupBuyUserService;
     @Autowired
     private GroupBuyActivitySkuService groupBuyActivitySkuService;
+    @Autowired
+    private AsyncService asyncService;
 
     /**
      * 预下单V1.7
@@ -594,6 +601,9 @@ public class FrontOrderServiceImpl implements FrontOrderService {
         for (int i = 0; i < platCouponUserList.size(); ) {
             CouponUser couponUser = platCouponUserList.get(i);
             if (couponUser.getCategory().equals(CouponConstants.COUPON_CATEGORY_UNIVERSAL)) {
+                if (couponUser.getCouponType() == 3) {
+
+                }
                 if (remainPrice.compareTo(new BigDecimal(couponUser.getMoney().toString())) <= 0) {
                     platCouponUserList.remove(i);
                     continue;
@@ -786,6 +796,19 @@ public class FrontOrderServiceImpl implements FrontOrderService {
                 Integer couponUserId = couponUserService.autoReceiveCoupon(platCouponList.get(0), user.getId());
                 preOrderInfoVo.setPlatUserCouponId(couponUserId);
             }
+            if (preOrderInfoVo.getFreightFee().compareTo(BigDecimal.ZERO) > 0) {
+                CouponUser c = platCouponUserList.stream().filter(x -> x.getCouponType() == 3).findFirst().orElse(null);
+                if (ObjectUtil.isNotNull(c)) {
+                    if (preOrderInfoVo.getFreightFee().compareTo(new BigDecimal(c.getMoney())) >= 0) {
+                        preOrderInfoVo.setFreightFee(preOrderInfoVo.getFreightFee().subtract(new BigDecimal(c.getMoney())));
+
+
+                    } else {
+                        preOrderInfoVo.setFreightFee(BigDecimal.ZERO);
+                    }
+                }
+            }
+
         }
         preOrderInfoVo.setCouponFee(preOrderInfoVo.getMerCouponFee().add(preOrderInfoVo.getPlatCouponFee()));
     }
@@ -1522,7 +1545,8 @@ public class FrontOrderServiceImpl implements FrontOrderService {
      * @param orderNo     订单号
      * @return 用户积分记录
      */
-    private UserIntegralRecord initOrderUseIntegral(Integer uid, Integer useIntegral, Integer integral, String orderNo) {
+    @Override
+    public UserIntegralRecord initOrderUseIntegral(Integer uid, Integer useIntegral, Integer integral, String orderNo) {
         UserIntegralRecord integralRecord = new UserIntegralRecord();
         integralRecord.setUid(uid);
         integralRecord.setLinkId(orderNo);
@@ -1544,7 +1568,8 @@ public class FrontOrderServiceImpl implements FrontOrderService {
      * @param orderNo     订单号
      * @return 用户积分记录
      */
-    private UserIntegralRecord initIntegralOrderUseIntegral(Integer uid, Integer useIntegral, Integer integral, String orderNo) {
+    @Override
+    public UserIntegralRecord initIntegralOrderUseIntegral(Integer uid, Integer useIntegral, Integer integral, String orderNo) {
         UserIntegralRecord integralRecord = new UserIntegralRecord();
         integralRecord.setUid(uid);
         integralRecord.setLinkId(orderNo);
@@ -3207,6 +3232,13 @@ public class FrontOrderServiceImpl implements FrontOrderService {
         }
         // 使用积分
         if (request.getIsUseIntegral() && user.getIntegral() > 0) {
+            orderInfoVo.getCartIdList().stream().forEach(x -> {
+                Cart cart = cartService.getByIdAndUid(x, user.getId());
+                Product product = productService.getById(cart.getProductId());
+                if (!Boolean.TRUE.equals(product.getCanUseIntegral())) {
+                    throw new CrmebException("存在不允许积分抵扣商品:" + product.getName());
+                }
+            });
             String integralDeductionStartMoney = systemConfigService.getValueByKey(SysConfigConstants.CONFIG_KEY_INTEGRAL_DEDUCTION_START_MONEY);
             if (Integer.parseInt(integralDeductionStartMoney) <= 0 || payPrice.compareTo(new BigDecimal(integralDeductionStartMoney)) < 0) {
                 priceResponse.setDeductionPrice(BigDecimal.ZERO);

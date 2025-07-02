@@ -3,6 +3,7 @@ package com.zbkj.front.service;
 import com.github.pagehelper.PageInfo;
 import com.zbkj.common.model.order.OrderDetail;
 import com.zbkj.common.model.user.UserAddress;
+import com.zbkj.common.model.user.UserIntegralRecord;
 import com.zbkj.common.request.*;
 import com.zbkj.common.response.*;
 import com.zbkj.common.vo.LogisticsResultVo;
@@ -154,6 +155,10 @@ public interface FrontOrderService {
      */
     void getFreightFee_V_1_8(PreOrderInfoVo orderInfoVo, UserAddress userAddress, Boolean userIsPaidMember);
 
+
+    UserIntegralRecord initOrderUseIntegral(Integer uid, Integer useIntegral, Integer integral, String orderNo);
+
+    UserIntegralRecord initIntegralOrderUseIntegral(Integer uid, Integer useIntegral, Integer integral, String orderNo);
 
     /**
      * 退款单退回商品

@@ -14,21 +14,26 @@ public class PrizeDrawRequest extends PageParamRequest {
     @ApiModelProperty(value = "用户ID")
     private Integer userId;
 
-    @ApiModelProperty(value = "奖品ID")
-    private Integer prizeId;
-
     @ApiModelProperty(value = "奖品类型")
-    private Integer prizeType;
+    private Integer type;
 
     @ApiModelProperty(value = "奖品值")
-    private Integer prizeValue;
+    private Integer value;
 
-    @ApiModelProperty(value = "消耗积分")
-    private Integer costPoints;
+    @ApiModelProperty(value = "中奖概率")
+    private BigDecimal probability;
 
-    @ApiModelProperty(value = "创建时间")
-    private Date createTime;
-
-    @ApiModelProperty(value = "0:未领取 1:已领取 2:已过期")
+    @ApiModelProperty(value = "状态：0、关闭；1、启用；")
     private Integer status;
+
+    @ApiModelProperty(value = "奖品数量")
+    private Integer num;
+
+    @ApiModelProperty(value = "领取条件：0、任意；1、积分；3、支付领取")
+    private Integer cond;
+
+    @ApiModelProperty(value = "积分分数/支付金额")
+    private BigDecimal mon;
+
+
 }

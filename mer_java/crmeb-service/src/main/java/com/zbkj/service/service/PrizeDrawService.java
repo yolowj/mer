@@ -6,6 +6,7 @@ import com.zbkj.common.model.prize.PrizeDrawRequest;
 import com.zbkj.common.model.prize.PrizeDraw;
 import com.zbkj.common.model.prize.UserRequest;
 import com.zbkj.common.model.user.User;
+import com.zbkj.common.response.LotteryResponse;
 
 import java.util.List;
 
@@ -16,11 +17,12 @@ import java.util.List;
 */
 public interface PrizeDrawService extends IService<PrizeDraw> {
 
+    List<LotteryRecord> getLotteryRecordList(PrizeDrawRequest prizeDrawRequest);
+
+    LotteryResponse  execute();
+
+    List<PrizeDraw> getList();
+
     List<PrizeDraw> getList(PrizeDrawRequest prizeDrawRequest);
 
-    PrizeDraw draw(Integer id);
-
-    PrizeDraw drawNew(Integer id);
-
-    List<LotteryRecord> getLotteryRecordList(Integer id);
 }

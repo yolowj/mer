@@ -60,6 +60,15 @@ public interface CouponUserService extends IService<CouponUser> {
      */
     Boolean receiveCoupon(Integer cid);
 
+
+    /**
+     * 抽奖领取优惠券
+     * @param cid
+     * @return
+     */
+    Boolean receiveCouponLot(Integer cid);
+
+
     /**
      * 支付成功赠送处理
      * @param couponId 优惠券编号

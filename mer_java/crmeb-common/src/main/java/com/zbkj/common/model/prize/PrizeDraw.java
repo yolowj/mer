@@ -52,6 +52,12 @@ public class PrizeDraw implements Serializable {
     @ApiModelProperty(value = "奖品数量")
     private Integer num;
 
+    @ApiModelProperty(value = "领取条件：0、任意；1、积分；3、支付领取")
+    private Integer cond;
+
+    @ApiModelProperty(value = "积分分数/支付金额")
+    private BigDecimal mon;
+
     private Date createTime;
 
 

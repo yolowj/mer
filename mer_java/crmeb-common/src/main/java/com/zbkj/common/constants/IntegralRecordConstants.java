@@ -41,6 +41,9 @@ public class IntegralRecordConstants {
     /** 积分记录关联类型—签到 */
     public static final String INTEGRAL_RECORD_LINK_TYPE_SIGN = "sign";
 
+    /** 积分记录关联类型—抽奖 */
+    public static final String INTEGRAL_RECORD_LINK_TYPE_LOTTERY = "lottery";
+
     /** 积分记录关联类型—系统后台 */
     public static final String INTEGRAL_RECORD_LINK_TYPE_SYSTEM = "system";
 
@@ -49,6 +52,9 @@ public class IntegralRecordConstants {
 
     /** 积分记录标题—签到积分奖励 */
     public static final String INTEGRAL_RECORD_TITLE_SIGN = "签到积分奖励";
+
+    /** 积分记录标题—签到积分奖励 */
+    public static final String INTEGRAL_RECORD_TITLE_LOTTERY = "抽奖积分奖励";
 
     /** 积分记录标题—后台积分操作 */
     public static final String INTEGRAL_RECORD_TITLE_SYSTEM = "后台积分操作";

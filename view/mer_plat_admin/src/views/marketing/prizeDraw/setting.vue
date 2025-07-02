@@ -41,6 +41,18 @@
 <!--            <div v-else>{{ scope.row.status ? '开启' : '关闭' }}</div>-->
 <!--          </template>-->
 <!--        </el-table-column>-->
+        <el-table-column prop="num" label="剩余数量" min-width="130" />
+        <el-table-column prop="status" label="类型" min-width="150" :show-overflow-tooltip="true">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.status == 0">已生效</el-tag>
+            <el-tag v-if="scope.row.status == 1">已禁用</el-tag>
+          </template>
+        </el-table-column>
+
+
+
+
+
         <el-table-column prop="createTime" label="创建时间" min-width="130" />
         <el-table-column label="操作" width="100" fixed="right">
           <template slot-scope="scope">
@@ -79,8 +91,29 @@
           </div>
           <el-input v-model="form.value" v-if="form.type == 3" placeholder="请输入积分" />
         </el-form-item>
+        <el-form-item label="奖品数量：">
+          <el-input-number v-model="form.num" style="width: 80%" :min="0" :max="100" controls-position="right" placeholder="请输入奖品数量" />
+        </el-form-item>
         <el-form-item label="中奖概率：">
           <el-input-number v-model="form.probability" style="width: 80%" :min="0" :max="100" controls-position="right" placeholder="请输入中奖概率" />
+        </el-form-item>
+        <el-form-item label="领取条件：">
+          <el-select v-model="form.con"  placeholder="请选择领取条件" style="width: 80%" :min="0" :max="100" >
+            <el-option label="直领" value="0" />
+            <el-option label="积分/分" value="1" />
+            <el-option label="支付/元" value="2" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="领取所需：">
+          <el-input-number v-model="form.mon" style="width: 80%" :min="0" :max="100" controls-position="right" placeholder="领取所需" />
+        </el-form-item>
+
+        <el-form-item label="状态：">
+          <el-select v-model="form.status"  placeholder="状态" style="width: 80%" :min="0" :max="100" >
+            <el-option label="禁用" value="0" />
+            <el-option label="禁用" value="1" />
+          </el-select>
         </el-form-item>
 
       </el-form>
