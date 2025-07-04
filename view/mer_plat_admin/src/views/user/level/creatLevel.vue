@@ -173,6 +173,7 @@ export default {
         icon: [{ required: true, message: '请上传图标', trigger: 'change' }],
         backImage: [{ required: true, message: '请上传背景图', trigger: 'change' }],
       },
+      keyNum: 0,
       levelNum: [],
       levelNumDataNew: this.levelNumData,
       //levelData: []
@@ -237,8 +238,8 @@ export default {
         (this.keyNum += 1),
         this.formValidate.coupons,
         function (row) {
-          _this.$set(_this.formValidate, 'couponIds', []); // 确保响应式
-          _this.$set(_this.formValidate, 'coupons', row); // 确保响应式
+          _this.formValidate.couponIds = [];
+          _this.formValidate.coupons = row;
           row.map((item) => {
             _this.formValidate.couponIds.push(item.id);
           });

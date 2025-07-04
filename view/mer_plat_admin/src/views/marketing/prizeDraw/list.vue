@@ -59,7 +59,7 @@
         <el-table-column prop="costPoints" label="消耗积分" min-width="100" />
         <el-table-column label="抽奖日期" width="90" fixed="right">
           <template slot-scope="scope">
-            <span>{{ scope.row.date }}</span>
+            <span>{{ scope.row.createTime }}</span>
           </template>
         </el-table-column>
       </el-table>
