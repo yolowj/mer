@@ -142,6 +142,95 @@
                   </el-button>
                 </el-form-item>
               </div>
+              <div v-if="currentTab == 3 && checkPermi(['platform:marketing:activity:membersDay:present:config'])">
+                <h2 class="form_label">规则设置</h2>
+                <el-form-item label="月会员日:">
+                  <el-select v-model="formValidate.selectedDay" placeholder="请选择日期（1-31）">
+                    <el-option :key="0"  :label="'不设置'"   :value="0">
+                    </el-option>
+                    <el-option
+                      v-for="day in 31"
+                      :key="day"
+                      :label="`${day}号`"
+                      :value="day">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+
+
+                <el-form-item label="周会员日:"   >
+                    <el-select v-model="formValidate.selectedWeek" placeholder="请选择星期"     @change="handleWeekChange">
+                      <el-option
+                        v-for="day in weekDays"
+                        :key="day.value"
+                        :label="day.label"
+
+                        :value="day.value">
+                      </el-option>
+                    </el-select>
+                </el-form-item>
+
+                <el-form-item label="活动状态:">
+                  <el-switch
+                    :width="56"
+                    v-model="formValidate.membersDaySwitch"
+                    active-text="开启"
+                    inactive-text="关闭"
+                  />
+                  <p class="desc mt10">活动开启商城用户可获得下方设置的会员日/会员周福利，活动关闭之后用户会员日/会员周不会赠送福利。</p>
+                </el-form-item>
+                <el-form-item label="活动对象:">
+                  <span>商品已经设置会员日的商品</span>
+                </el-form-item>
+                <el-form-item label="优惠券:">
+                  <div class="grid_box mb10" v-if="couponList.length">
+                    <el-table :data="couponList" style="width: 310px" size="small">
+                      <el-table-column prop="id" label="优惠券ID" min-width="80" />
+                      <el-table-column prop="name" label="优惠券名称" min-width="200" :show-overflow-tooltip="true" />
+                      <el-table-column prop="money" label="优惠券面值 ( ¥ )" min-width="90" />
+                      <el-table-column prop="minPrice" label="优惠券门槛" min-width="120">
+                        <template slot-scope="scope">
+                          <span class="_type">满{{ scope.row.minPrice }}元可用</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column prop="startTime" label="使用期限" min-width="150">
+                        <template slot-scope="scope">
+                          <div v-if="scope.row.isDel">优惠券已删除</div>
+                          <div v-else>
+                            <div v-if="scope.row.isFixedTime">
+                              {{ getTime(scope.row.useStartTime) + ' ~ ' + getTime(scope.row.useEndTime) + '可用' }}
+                            </div>
+                            <div v-else>{{ '领取后' + scope.row.day + '天内可用' }}</div>
+                          </div>
+                        </template>
+                      </el-table-column>
+                      <el-table-column prop="stock" label="剩余张数" min-width="90">
+                        <template slot-scope="scope">
+                          <span class="_sales">{{
+                              !scope.row.isLimited ? '不限量' : '剩余' + scope.row.lastTotal + '张'
+                            }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="操作" width="100" fixed="right">
+                        <template slot-scope="scope">
+                          <a @click="delItem(scope.row.id, scope.$index)">删除</a>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                  </div>
+                  <a @click="addCoupon">+ 添加优惠券</a>
+                </el-form-item>
+                <el-form-item>
+                  <el-button
+                    size="small"
+                    type="primary"
+                    class="mr10"
+                    v-hasPermi="['platform:marketing:activity:membersDay:present:edit']"
+                    v-debounceClick="confirmEdit"
+                  >保存
+                  </el-button>
+                </el-form-item>
+              </div>
             </el-form>
           </div>
           <div v-if="currentTab === '1'" class="proview acea-row row-center-wrapper">
@@ -158,7 +247,9 @@ import {
   newPeoplePresentEditApi,
   newPeoplePresentConfigApi,
   birthdayPresentConfigApi,
+  membersDayConfigApi,
   birthdayPresentEditApi,
+  membersDayEditApi
 } from '@/api/marketing';
 import { checkPermi } from '@/utils/permission'; // 权限判断函数
 export default {
@@ -166,13 +257,29 @@ export default {
   data() {
     return {
       currentTab: '1',
+      selectedDay: 0,
+      selectedWeek: 0, // 存储选中的星期值（如 1、2、3...）
+      weekDays: [
+        { value: 0, label: '不设置' },
+        { value: 1, label: '星期一' },
+        { value: 2, label: '星期二' },
+        { value: 3, label: '星期三' },
+        { value: 4, label: '星期四' },
+        { value: 5, label: '星期五' },
+        { value: 6, label: '星期六' },
+        { value: 7, label: '星期日' }, // 注意：JS 中星期日是 0
+      ],
       tabList: [
         { value: '1', title: '新人礼' },
         { value: '2', title: '生日有礼' },
+        { value: '3', title: '会员日' },
       ],
       formValidate: {
+        selectedWeek: 0,
+        selectedDay: 0,
         newPeopleSwitch: false,
         birthdaySwitch: false,
+        membersDaySwitch: false,
         couponIdList: [],
       },
       visibleCoupon: false,
@@ -223,6 +330,11 @@ export default {
     tabChange(e) {
       this.currentTab = e.name;
     },
+   handleWeekChange(val) {
+      console.log('选中的值:', val);
+     this.formValidate.selectedWeek = val
+     this.$set(this.formValidate, 'selectedWeek', val);
+    },
     //添加优惠券
     addCoupon() {
       const _this = this;
@@ -251,12 +363,28 @@ export default {
           .catch(() => {
             this.listLoading = false;
           });
-      } else {
+      } else  if (this.currentTab === '2') {
         this.listLoading = true;
         birthdayPresentConfigApi()
           .then((res) => {
             this.$set(this, 'couponList', res.couponList ? res.couponList : []);
             this.formValidate.birthdaySwitch = res.birthdaySwitch;
+            this.couponList.forEach((item) => {
+              this.formValidate.couponIdList.push(item.id);
+            });
+            this.listLoading = false;
+          })
+          .catch(() => {
+            this.listLoading = false;
+          });
+      }  else  if (this.currentTab === '3') {
+        this.listLoading = true;
+        membersDayConfigApi()
+          .then((res) => {
+            this.$set(this, 'couponList', res.couponList ? res.couponList : []);
+            this.formValidate.membersDaySwitch = res.membersDaySwitch;
+            this.formValidate.selectedWeek = res.selectedWeek;
+            this.formValidate.selectedDay = res.selectedDay;
             this.couponList.forEach((item) => {
               this.formValidate.couponIdList.push(item.id);
             });
@@ -317,8 +445,13 @@ export default {
           this.$message.success('保存成功');
           this.getConfig();
         });
-      } else {
+      }  if (this.currentTab === '2') {
         birthdayPresentEditApi(this.formValidate).then((res) => {
+          this.$message.success('保存成功');
+          this.getConfig();
+        });
+      } if (this.currentTab === '3') {
+        membersDayEditApi(this.formValidate).then((res) => {
           this.$message.success('保存成功');
           this.getConfig();
         });

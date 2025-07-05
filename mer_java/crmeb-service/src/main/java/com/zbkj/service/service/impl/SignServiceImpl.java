@@ -6,28 +6,31 @@ import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.github.pagehelper.PageInfo;
 import com.zbkj.common.constants.*;
 import com.zbkj.common.exception.CrmebException;
+import com.zbkj.common.model.coupon.Coupon;
+import com.zbkj.common.model.product.Product;
 import com.zbkj.common.model.sgin.SignConfig;
 import com.zbkj.common.model.sgin.UserSignRecord;
 import com.zbkj.common.model.user.User;
 import com.zbkj.common.model.user.UserExperienceRecord;
 import com.zbkj.common.model.user.UserIntegralRecord;
-import com.zbkj.common.request.PageParamRequest;
-import com.zbkj.common.request.SignConfigRequest;
-import com.zbkj.common.request.SignRecordSearchRequest;
-import com.zbkj.common.request.SupSignRequest;
+import com.zbkj.common.request.*;
 import com.zbkj.common.response.SignConfigResponse;
 import com.zbkj.common.response.SignPageInfoResponse;
 import com.zbkj.common.response.SupSignResponse;
 import com.zbkj.common.response.UserSignRecordResponse;
+import com.zbkj.common.vo.FreeOrderInfoVo;
 import com.zbkj.common.vo.PaidMemberBenefitsVo;
 import com.zbkj.service.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -66,6 +69,10 @@ public class SignServiceImpl implements SignService {
     @Autowired
     private PaidMemberService paidMemberService;
 
+    @Autowired
+    private CouponService couponService;
+    @Autowired
+    private ProductService productService;
     /**
      * 获取签到配置
      */
@@ -75,6 +82,7 @@ public class SignServiceImpl implements SignService {
         SignConfigResponse response = new SignConfigResponse();
         response.setSignRuleDescription(signRule);
         List<SignConfig> configList = signConfigService.findList();
+
         if (CollUtil.isEmpty(configList)) {
             response.setBaseSignConfig(getInitBaseConfig());
             return response;
@@ -85,6 +93,17 @@ public class SignServiceImpl implements SignService {
                 response.setBaseSignConfig(signConfig);
                 configList.remove(i);
                 break;
+            }
+
+           if (ObjectUtil.isNotNull(signConfig.getIsCoupon())&& signConfig.getIsCoupon()) {
+                Coupon coupon = couponService.getById(signConfig.getCouponId());
+                signConfig.setCoupons(Arrays.asList(coupon));
+
+
+            }
+            if (ObjectUtil.isNotNull(signConfig.getIsProduct())&& signConfig.getIsProduct()) {
+                Product product = productService.getById(signConfig.getProductId());
+                signConfig.setProducts(Arrays.asList(product));
             }
         }
         if (ObjectUtil.isNull(response.getBaseSignConfig())) {
@@ -169,12 +188,11 @@ public class SignServiceImpl implements SignService {
         return response;
     }
 
-
     /**
      * 获取签到页信息
      * @return 签到页信息
      */
-    @Override
+  /*  @Override
     public SignPageInfoResponse execute() {
         User user = userService.getInfo();
         DateTime date = DateUtil.date();
@@ -190,6 +208,27 @@ public class SignServiceImpl implements SignService {
             throw new CrmebException("今天已经签到过啦~！");
         }
 
+        Integer day = lastSignRecord.getDay();
+        SignConfig  signConfig = signConfigService.findList().stream().filter(x->x.getDay()== day).findFirst().orElse(null);
+        if (ObjectUtil.isNotNull(signConfig)){
+            if(signConfig.getIsIntegral()){
+                lastSignRecord.setIntegral(signConfig.getIntegral());
+            }
+
+            if (signConfig.getIsExperience()){
+                lastSignRecord.setExperience(signConfig.getExperience());
+            }
+
+            if (signConfig.getIsCoupon()){
+
+            }
+            if(signConfig.getIsProduct()){
+
+            }
+        }
+
+
+
         SignPageInfoResponse response = new SignPageInfoResponse();
         response.setSignDayNum(lastSignRecord.getDay());
         response.setIntegral(lastSignRecord.getIntegral() + lastSignRecord.getAwardIntegral());
@@ -198,6 +237,29 @@ public class SignServiceImpl implements SignService {
         response.setSignRule(signRule);
         response.setIsTip(isTip);
         return response;
+    }*/
+
+
+    @Override
+    public SignPageInfoResponse execute() {
+        User user = userService.getInfo();
+        String date = DateUtil.date().toString(DateConstants.DATE_FORMAT_DATE);
+        // 3. 检查是否已签到
+        if (userSignRecordService.isSigned(user.getId(), date)) {
+            throw new CrmebException("重复签到");
+        }
+        UserSignRecord lastSignRecord = userSignRecordService.getLastByUid(user.getId());
+        UserSignRecord userSignRecord =  sign(date,user,lastSignRecord);
+        SignPageInfoResponse response = new SignPageInfoResponse();
+        response.setSignDayNum(userSignRecord.getDay());
+        response.setIntegral(userSignRecord.getIntegral());
+        response.setExperience(userSignRecord.getAwardExperience());
+        String signRule = systemConfigService.getValueByKey(SysConfigConstants.CONFIG_SIGN_RULE_DESCRIPTION);
+        response.setSignRule(signRule);
+        response.setIsTip(true);
+        return response;
+
+
     }
 
 
@@ -211,6 +273,13 @@ public class SignServiceImpl implements SignService {
         Integer uid = userService.getUserIdException();
         return userSignRecordService.findPageByUid(uid, pageParamRequest);
     }
+
+    @Autowired
+    private CouponUserService couponUserService;
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private UserAddressService userAddressService;
 
     /**
      * 签到
@@ -229,6 +298,9 @@ public class SignServiceImpl implements SignService {
                 user.setSignNum(0);
             }
         }
+
+        StringBuilder mark = new StringBuilder("签到奖励");
+
         int integral = 0;
         int experience = 0;
         UserSignRecord userSignRecord = new UserSignRecord();
@@ -249,7 +321,9 @@ public class SignServiceImpl implements SignService {
             experience += baseSignConfig.getExperience();
         }
         List<SignConfig> signConfigList = config.getSignConfigList();
-        SignConfig signConfig = signConfigList.stream().filter(e -> e.getDay().equals(user.getSignNum() + 1)).findAny().orElse(null);
+        //11
+        //SignConfig signConfig = signConfigList.stream().filter(e -> e.getDay().equals(user.getSignNum() + 1)).findAny().orElse(null);
+        SignConfig signConfig = signConfigList.stream().filter(e -> e.getId()==11).findAny().orElse(null);
         if (ObjectUtil.isNotNull(signConfig)) {
             if (signConfig.getIsIntegral()) {
                 userSignRecord.setAwardIntegral(signConfig.getIntegral());
@@ -258,6 +332,38 @@ public class SignServiceImpl implements SignService {
             if (signConfig.getIsExperience()) {
                 userSignRecord.setAwardExperience(signConfig.getExperience());
                 experience += signConfig.getExperience();
+            }
+            if(signConfig.getIsCoupon()){
+                //奖励优惠券
+                couponUserService.receiveCouponLot(signConfig.getCouponId());
+                mark.append(signConfig.getCouponName()).append("优惠券");
+            }
+            if(signConfig.getIsProduct()){
+                //奖励商品 免费领取商品
+                CreateFreeOrderRequest orderRequest = new CreateFreeOrderRequest();
+                //创建订单
+                orderRequest.setAddressId(userAddressService.getDefaultByUid(user.getId()).getId());
+
+
+               // OrderMerchantRequest merchantRequest = new OrderMerchantRequest();
+               // merchantRequest.setMerId(0); // 平台订单
+//
+               // Product product = productService.getById(signConfig.getProductId());
+               // if (product.getDeliveryMethod().equals("2")) {
+               //     merchantRequest.setShippingType(2);
+               // } else {
+               //     merchantRequest.setShippingType(1);
+               // }
+               // orderRequest.setOrderMerchantRequest(merchantRequest);
+               // orderRequest.setIsUseIntegral(false);
+               // orderRequest.setPlatUserCouponId(0);
+               // orderRequest.setSystemFormId(product.getSystemFormId());
+               // orderRequest.setOrderExtend(null);
+               // FreeOrderInfoVo orderInfoVo = new FreeOrderInfoVo();
+
+                Product product = productService.getById(signConfig.getProductId());
+                mark.append(product.getName()).append("优惠券");
+                orderService.orderFree(product, user);
             }
         } else {
             if (user.getSignNum() > 0 && CollUtil.isNotEmpty(signConfigList)) {
@@ -291,7 +397,7 @@ public class SignServiceImpl implements SignService {
             }
         }
 
-        StringBuilder mark = new StringBuilder("签到奖励");
+
         if (baseSignConfig.getIsIntegral() || (ObjectUtil.isNotNull(signConfig) && signConfig.getIsIntegral())) {
             mark.append(integral).append("积分");
         }
@@ -343,6 +449,8 @@ public class SignServiceImpl implements SignService {
         return userSignRecord;
     }
 
+
+
     /**
      * 获取初始化基础签到配置
      */
@@ -359,8 +467,8 @@ public class SignServiceImpl implements SignService {
 
     // 添加获取每月最大补签次数的方法
     private int getMaxRetroSignTimes() {
-        String configValue = systemConfigService.getValueByKey(SysConfigConstants.CONFIG_RETRO_SIGN_MAX_TIMES);
-        return StrUtil.isNotBlank(configValue) ? Integer.parseInt(configValue) : 3; // 默认3次
+        SignConfig signConfig = signConfigService.getByDay(0);
+        return ObjectUtil.isNotNull(signConfig) ? signConfig.getSupNum() : 0; // 默认3次
     }
 
     // 添加获取用户当月已补签次数的方法

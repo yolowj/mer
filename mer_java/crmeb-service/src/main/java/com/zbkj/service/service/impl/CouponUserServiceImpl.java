@@ -339,6 +339,63 @@ public class CouponUserServiceImpl extends ServiceImpl<CouponUserDao, CouponUser
         });
     }
 
+
+    /**
+     * 用户领取优惠券可重复领取
+     *
+     * @param cid 优惠券id
+     */
+    @Override
+    public Boolean receiveCouponLot(Integer cid) {
+        Integer userId = userService.getUserIdException();
+        // 获取优惠券信息
+        Coupon coupon = couponService.getInfoException(cid);
+        if (!coupon.getStatus()) {
+            throw new CrmebException(CouponResultCode.COUPON_STATUS_ABNORMAL);
+        }
+        //看是否有剩余数量,是否够给当前用户
+        if (coupon.getIsLimited() && coupon.getLastTotal() < 1) {
+            throw new CrmebException(CommonResultCode.VALIDATE_FAILED, "优惠券余量不足！");
+        }
+        //看是否过期
+        if (coupon.getIsTimeReceive()) {
+            //非永久可领取
+            String date = CrmebDateUtil.nowDateTimeStr();
+            int result = CrmebDateUtil.compareDate(date, CrmebDateUtil.dateToStr(coupon.getReceiveEndTime(), DateConstants.DATE_FORMAT), DateConstants.DATE_FORMAT);
+            if (result > 0) {
+                //过期了
+                throw new CrmebException(CommonResultCode.VALIDATE_FAILED, "优惠券领取截止日期已过！");
+            }
+        }
+        //是否有固定的使用时间
+        if (!coupon.getIsFixedTime()) {
+            String endTime = CrmebDateUtil.addDay(CrmebDateUtil.nowDate(DateConstants.DATE_FORMAT), coupon.getDay(), DateConstants.DATE_FORMAT);
+            coupon.setUseEndTime(CrmebDateUtil.strToDate(endTime, DateConstants.DATE_FORMAT));
+            coupon.setUseStartTime(CrmebDateUtil.nowDateTimeReturnDate(DateConstants.DATE_FORMAT));
+        }
+        CouponUser couponUser = new CouponUser();
+        couponUser.setCouponId(coupon.getId());
+        couponUser.setMerId(coupon.getMerId());
+        couponUser.setUid(userId);
+        couponUser.setName(coupon.getName());
+        couponUser.setPublisher(coupon.getPublisher());
+        couponUser.setCategory(coupon.getCategory());
+        couponUser.setReceiveType(coupon.getReceiveType());
+        couponUser.setCouponType(coupon.getCouponType());
+        couponUser.setMoney(coupon.getMoney());
+        couponUser.setDiscount(coupon.getDiscount());
+        couponUser.setMinPrice(coupon.getMinPrice());
+        couponUser.setStartTime(coupon.getUseStartTime());
+        couponUser.setEndTime(coupon.getUseEndTime());
+        couponUser.setStatus(CouponConstants.STORE_COUPON_USER_STATUS_USABLE);
+        return transactionTemplate.execute(e -> {
+            save(couponUser);
+            couponService.deduction(coupon.getId(), 1, coupon.getIsLimited());
+            return Boolean.TRUE;
+        });
+    }
+
+
     /**
      * 用户是否能够领取此优惠券
      * @param coupon 优惠券

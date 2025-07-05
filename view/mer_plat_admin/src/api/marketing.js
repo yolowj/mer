@@ -163,6 +163,29 @@ export function birthdayPresentEditApi(data) {
 }
 
 /**
+ * 会员 编辑
+ * @param pram
+ */
+export function membersDayEditApi(data) {
+  return request({
+    url: 'admin/platform/marketing/activity/new/people/membersDay/edit',
+    method: 'post',
+    data,
+  });
+}
+
+/**
+ * 会员日礼 获取
+ * @param pram
+ */
+export function membersDayConfigApi() {
+  return request({
+    url: 'admin/platform/marketing/activity/new/people/membersDay/config',
+    method: 'get',
+  });
+}
+
+/**
  * 积分日志 列表
  * @param pram
  */

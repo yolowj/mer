@@ -124,5 +124,7 @@ public interface AsyncService {
      */
     void verifyOrderWechatSendUploadShipping(String orderNo);
 
+
+
     Boolean manyMerchantOrderProcessing(Order order, List<MerchantOrder> merchantOrderList);
 }

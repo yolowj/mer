@@ -10,10 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.zbkj.common.constants.CouponConstants;
-import com.zbkj.common.constants.DateConstants;
-import com.zbkj.common.constants.ProductConstants;
-import com.zbkj.common.constants.RedisConstants;
+import com.zbkj.common.constants.*;
 import com.zbkj.common.dto.ProductPriceCalculateDto;
 import com.zbkj.common.exception.CrmebException;
 import com.zbkj.common.model.cat.Cart;
@@ -528,29 +525,25 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
         boolean isVipDay = false;
         BigDecimal vipDayMultiple = new BigDecimal("1.00"); // 默认不翻倍
 
-        try {
-            // 获取会员日配置
-            String vipDaySwitch = systemConfigService.getValueByKey("vip_day_switch");
-            String vipDayDates = systemConfigService.getValueByKey("vip_day_dates");
-            String vip_day_discount = "0.88";//systemConfigService.getValueByKey("vip_day_discount");
 
-            // 检查开关和日期配置
-            if ("true".equals(vipDaySwitch) && StrUtil.isNotBlank(vipDayDates) && StrUtil.isNotBlank(vip_day_discount)) {
-                // 解析倍数配置
-                vipDayMultiple = new BigDecimal(vip_day_discount);
-                // 获取当前日期
+        // 获取会员日配置
+        String MEMBER_PRESENT_SWITCH = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_SWITCH);
+        String MEMBER_PRESENT_DAY = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_DAY);
+        String MEMBER_PRESENT_WEEK = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_WEEK);
+         // 检查开关和日期配置
+        if (StrUtil.isNotBlank(MEMBER_PRESENT_SWITCH) && Constants.COMMON_SWITCH_OPEN.equals(MEMBER_PRESENT_SWITCH)) {
+            if (ObjectUtil.isNotNull(MEMBER_PRESENT_DAY) && Integer.parseInt(MEMBER_PRESENT_DAY) !=0 ) {
                 Integer vipMonth = LocalDate.now().getDayOfMonth();
-                Integer vipWeek = LocalDate.now().getDayOfWeek().getValue();
-                // 检查今天是否是会员日
-                if(vipDayDates.split(",").length>1){
-                    String v1 = vipDayDates.split(",")[0];
-                    String v2 = vipDayDates.split(",")[1];
-                    if(Integer.parseInt(v1)==vipMonth) isVipDay = true;
-                    if(Integer.parseInt(v2)==vipWeek) isVipDay = true;
+                if (vipMonth.compareTo(Integer.parseInt(MEMBER_PRESENT_DAY)) == 0) {
+                    isVipDay = true;
                 }
             }
-        } catch (Exception e) {
-            log.error("会员日配置错误", e);
+            if (ObjectUtil.isNotNull(MEMBER_PRESENT_WEEK) && Integer.parseInt(MEMBER_PRESENT_WEEK) !=0) {
+                Integer vipWeek = LocalDate.now().getDayOfWeek().getValue();
+                if (vipWeek.compareTo(Integer.parseInt(MEMBER_PRESENT_DAY)) == 0) {
+                    isVipDay = true;
+                }
+            }
         }
 
 
@@ -607,21 +600,23 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
         Map<Integer, List<Cart>> merCartMap = cartList.stream().collect(Collectors.groupingBy(Cart::getMerId));
         List<Integer> merIdList = new ArrayList<>(merCartMap.keySet());
         BigDecimal merCouponPrice = BigDecimal.ZERO;
-        for (Map.Entry<Integer, List<Cart>> entry : merCartMap.entrySet()) {
+        for (Map.Entry<Integer, List<Cart>> entry : merCartMap.entrySet()) {  //遍历的是商户  每一个商户下的
             Integer merId = entry.getKey();
             List<Cart> carts = entry.getValue();
-            BigDecimal merProTotalPrice = BigDecimal.ZERO;    //会员日 和 会员价之后的总价格
-            for (Cart cart : carts) {
+            BigDecimal merProTotalPrice = BigDecimal.ZERO;    //会员日 和 会员价之后的总价格  劵前
+            for (Cart cart : carts) {   //遍历的是购物车
                 ProductAttrValue attrValue = attrValueMap.get(cart.getProductAttrUnique());
                 BigDecimal multiply;
-                if (attrValue.getIsPaidMember() && user.getIsPaidMember()) {
+                if(isVipDay){
+                    multiply = attrValue.getPrice().multiply(new BigDecimal(cart.getCartNum().toString())).multiply(vipDayMultiple);
+                }else if (attrValue.getIsPaidMember() && user.getIsPaidMember()) {
                     multiply = attrValue.getVipPrice().multiply(new BigDecimal(cart.getCartNum().toString()));
                 } else {
                     multiply = attrValue.getPrice().multiply(new BigDecimal(cart.getCartNum().toString()));
                 }
                 merProTotalPrice = merProTotalPrice.add(multiply);
             }
-            List<Integer> merProIdList = carts.stream().map(Cart::getProductId).distinct().collect(Collectors.toList());
+            List<Integer> merProIdList = carts.stream().map(Cart::getProductId).distinct().collect(Collectors.toList());   //商品id集合
             List<Coupon> merCouponList = couponService.findManyByMerIdAndMoney(merId, merProIdList, merProTotalPrice);  //可以用的券
             if (CollUtil.isNotEmpty(merCouponList)) {
                 for (int i = 0; i < merCouponList.size(); ) {
@@ -631,12 +626,17 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
                         continue;
                     }
                     List<Integer> cpIdList = CrmebUtil.stringToArray(coupon.getLinkedData());
+                    //购物车内如果商家券
                     List<Cart> merCartList = carts.stream().filter(f -> cpIdList.contains(f.getProductId())).collect(Collectors.toList());
+                    boolean finalIsVipDay = isVipDay;
+                    BigDecimal finalVipDayMultiple = vipDayMultiple;
                     BigDecimal proPrice = merCartList.stream()
                             .map(e -> {
                                 BigDecimal price;
                                 ProductAttrValue productAttrValue = attrValueMap.get(e.getProductAttrUnique());
-                                if (productAttrValue.getIsPaidMember() && user.getIsPaidMember()) {
+                                if(finalIsVipDay){
+                                    price = productAttrValue.getPrice().multiply(new BigDecimal(e.getCartNum().toString())).multiply(finalVipDayMultiple);
+                                }else  if (productAttrValue.getIsPaidMember() && user.getIsPaidMember()) {
                                     price = productAttrValue.getVipPrice().multiply(new BigDecimal(e.getCartNum().toString()));
                                 } else {
                                     price = productAttrValue.getPrice().multiply(new BigDecimal(e.getCartNum().toString()));
@@ -655,6 +655,8 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
                     i++;
                 }
             }
+
+
 
             // 查询适用的用户优惠券
             List<CouponUser> merCouponUserList = couponUserService.findManyByUidAndMerIdAndMoneyAndProList(userId, merId, merProIdList, merProTotalPrice);
@@ -736,13 +738,13 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
         // 自动领平台券计算
         // 查所有适用的平台优惠券
         BigDecimal remainingAmount = proTotalPrice.subtract(merCouponPrice);
-        List<Integer> proCategoryIdList = productList.stream().map(Product::getCategoryId).collect(Collectors.toList());
+        List<Integer> proCategoryIdList = productList.stream().map(Product::getCategoryId).collect(Collectors.toList()); //品类券
         List<Integer> secondParentIdList = productCategoryService.findParentIdByChildIds(proCategoryIdList);
         List<Integer> firstParentIdList = productCategoryService.findParentIdByChildIds(secondParentIdList);
         proCategoryIdList.addAll(secondParentIdList);
         proCategoryIdList.addAll(firstParentIdList);
         List<Integer> brandIdList = productList.stream().map(Product::getBrandId).collect(Collectors.toList());
-        List<Coupon> platCouponList = couponService.findManyPlatByMerIdAndMoney(proIdList, proCategoryIdList, merIdList, brandIdList, proTotalPrice);
+        List<Coupon> platCouponList = couponService.findManyPlatByMerIdAndMoney(proIdList, proCategoryIdList, merIdList, brandIdList, proTotalPrice); //品牌券
         for (int i = 0; i < platCouponList.size(); ) {
             Coupon coupon = platCouponList.get(i);
             if (coupon.getCategory().equals(CouponConstants.COUPON_CATEGORY_UNIVERSAL)) {
@@ -897,7 +899,7 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
         }
 
         // 查询适用的用户平台优惠券
-        List<CouponUser> platCouponUserList = couponUserService.findManyPlatByUidAndMerIdAndMoneyAndProList(userId, proIdList, proCategoryIdList, merIdList, brandIdList, proTotalPrice);
+        List<CouponUser> platCouponUserList = couponUserService.findManyPlatByUidAndMerIdAndMoneyAndProList(userId, proIdList, proCategoryIdList, merIdList, brandIdList, proTotalPrice);//平台券
         for (int i = 0; i < platCouponUserList.size(); ) {
             CouponUser couponUser = platCouponUserList.get(i);
             if (couponUser.getCategory().equals(CouponConstants.COUPON_CATEGORY_UNIVERSAL)) {
@@ -911,6 +913,8 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
                 }
             }
             Coupon coupon = couponService.getById(couponUser.getCouponId());
+
+
             if (couponUser.getCategory().equals(CouponConstants.COUPON_CATEGORY_PRODUCT)) {
                 List<Integer> cpIdList = CrmebUtil.stringToArray(coupon.getLinkedData());
                 BigDecimal proPrice = dtoList.stream().filter(f -> cpIdList.contains(f.getProductId()))
@@ -1069,7 +1073,9 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
             platCouponPrice = new BigDecimal(platCouponUserList.get(0).getMoney().toString());
         }
         if (CollUtil.isNotEmpty(platCouponList) && CollUtil.isEmpty(platCouponUserList)) {
-            platCouponPrice = new BigDecimal(platCouponList.get(0).getMoney().toString());
+            if(platCouponList.get(0).getCouponType()!=3){  //排除运费券
+                platCouponPrice = new BigDecimal(platCouponList.get(0).getMoney().toString());
+            }
         }
         if (CollUtil.isNotEmpty(platCouponList) && CollUtil.isNotEmpty(platCouponUserList)) {
             Long platCouponMoney = platCouponList.get(0).getMoney();
@@ -1178,5 +1184,6 @@ public class CartServiceImpl extends ServiceImpl<CartDao, Cart> implements CartS
         }
         return cart.getCartNum();
     }
+
 }
 

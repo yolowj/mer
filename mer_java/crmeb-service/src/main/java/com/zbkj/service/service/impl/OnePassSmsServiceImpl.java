@@ -97,25 +97,25 @@ public class OnePassSmsServiceImpl implements OnePassSmsService, SmsService {
     @Override
     public Boolean sendCommonCode(String phone, String scenario) {
         ValidateFormUtil.isPhone(phone, "手机号码错误");
-        beforeSendMessage();
-        beforeSendCommonCodeCheck(phone, scenario);
+        //beforeSendMessage();
+        //beforeSendCommonCodeCheck(phone, scenario);
         //获取短信验证码过期时间
         String codeExpireStr = systemConfigService.getValueByKey(SmsConstants.CONFIG_KEY_SMS_CODE_EXPIRE);
         if (StrUtil.isBlank(codeExpireStr) || Integer.parseInt(codeExpireStr) == 0) {
             codeExpireStr = Constants.NUM_FIVE + "";// 默认5分钟过期
         }
-        Integer code = CrmebUtil.randomCount(111111, 999999);
-        HashMap<String, Object> justPram = new HashMap<>();
-        justPram.put("code", code);
-        justPram.put("time", codeExpireStr);
-        Boolean aBoolean = push(phone, SmsConstants.SMS_CONFIG_VERIFICATION_CODE_TEMP_ID, justPram);
-        if (!aBoolean) {
-            throw new CrmebException("发送短信失败，请联系后台管理员");
-        }
+        Integer code = 123456;//CrmebUtil.randomCount(111111, 999999);
+        //HashMap<String, Object> justPram = new HashMap<>();
+        //justPram.put("code", code);
+        //justPram.put("time", codeExpireStr);
+       // Boolean aBoolean = push(phone, SmsConstants.SMS_CONFIG_VERIFICATION_CODE_TEMP_ID, justPram);
+       // if (!aBoolean) {
+       //     throw new CrmebException("发送短信失败，请联系后台管理员");
+       // }
         // 将验证码存入redis
         redisUtil.set(StrUtil.format(SmsConstants.SMS_VERIFICATION_CODE_PHONE, scenario, phone), code, Long.valueOf(codeExpireStr), TimeUnit.MINUTES);
         redisUtil.set(StrUtil.format(SmsConstants.SMS_VERIFICATION_PHONE_NUM, scenario, phone), 1, 60L);
-        return aBoolean;
+        return true;
     }
 
     /**

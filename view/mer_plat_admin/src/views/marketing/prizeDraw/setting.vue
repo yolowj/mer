@@ -111,8 +111,8 @@
 
         <el-form-item label="状态：">
           <el-select v-model="form.status"  placeholder="状态" style="width: 80%" :min="0" :max="100" >
-            <el-option label="禁用" value="0" />
-            <el-option label="启用" value="1" />
+            <el-option label="禁用" :value="0" />
+            <el-option label="启用" :value="1" />
           </el-select>
         </el-form-item>
 

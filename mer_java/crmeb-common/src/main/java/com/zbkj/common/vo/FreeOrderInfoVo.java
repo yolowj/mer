@@ -67,7 +67,7 @@ public class FreeOrderInfoVo implements Serializable {
     private BigDecimal userBalance;
 
     @ApiModelProperty(value = "商户订单数组")
-    private  PreMerchantOrderVo  merchantOrderVo;
+    private PreMerchantOrderVo  merchantOrderVo;
 
     @ApiModelProperty(value = "购物车编号列表")
     private List<Integer> cartIdList;

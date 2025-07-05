@@ -35,6 +35,42 @@
             ></el-input-number>
           </div>
         </el-form-item>
+
+
+        <el-form-item label="补签规则：" prop="supIntegral">
+          <div class="acea-row">
+            <el-checkbox v-model="signForm.isSupIntegral">补签扣除积分</el-checkbox>
+            <el-input-number
+              v-model.trim="signForm.supIntegral"
+              :min="0"
+              :max="9999"
+              :step="1"
+              label="积分值"
+              class="ml40"
+            ></el-input-number>
+          </div>
+        </el-form-item>
+
+
+
+        <el-form-item   prop="supNum">
+          <div class="acea-row">
+            <el-checkbox v-model="signForm.isSupNum">月补签次数限制</el-checkbox>
+            <el-input-number
+              v-model.trim="signForm.supNum"
+              :min="0"
+              :max="9999"
+              :step="1"
+              label="积分值"
+              class="ml40"
+            ></el-input-number>
+          </div>
+        </el-form-item>
+
+
+
+
+
         <el-form-item label="签到规则说明：" prop="name" class="operation">
           <el-input
             type="textarea"
@@ -65,14 +101,14 @@
         >新增连续签到奖励</el-button
       >
       <div class="from-tips mt14 mb20">连续签到奖励断签后会重新计算连续签到天数，达到连续天数后即可获得连续奖励</div>
-      <el-table :data="signConfigList" border>
+      <el-table :data="signConfigList" border style="width: 100%">
         <el-table-column label="连续天数" width="130">
           <template slot-scope="scope">
             <el-input v-show="scope.row.show" placeholder="请输入内容" v-model.trim="scope.row.day"></el-input>
             <span v-show="!scope.row.show">{{ scope.row.day }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="连续奖励" min-width="680">
+        <el-table-column label="连续奖励"  >
           <template slot-scope="scope">
             <div class="acea-row row-center-wrapper">
               <el-checkbox v-model="scope.row.isIntegral" :disabled="!scope.row.show">赠送积分值</el-checkbox>
@@ -85,9 +121,7 @@
                 label="积分值"
                 class="mr20"
               ></el-input-number>
-              <el-checkbox v-model="scope.row.isExperience" class="ml40 mr20" :disabled="!scope.row.show"
-                >赠送经验值</el-checkbox
-              >
+              <el-checkbox v-model="scope.row.isExperience" class="ml40 mr20" :disabled="!scope.row.show"  >赠送经验值</el-checkbox  >
               <el-input-number
                 :disabled="!scope.row.show"
                 v-model.trim="scope.row.experience"
@@ -96,7 +130,42 @@
                 :step="1"
                 label="经验值"
               ></el-input-number>
+
+
+
+              <el-checkbox v-model="scope.row.isCoupon" class="ml40 mr20" :disabled="!scope.row.show"  >赠送优惠券</el-checkbox>
+              <div class="acea-row">
+                <el-tag
+                  v-for="(tag, index) in scope.row.coupons"
+                  :key="index"
+                  class="mr10 mb10"
+                  :closable="scope.row.show"
+                  :disable-transitions="false"
+                  @close="handleCloseCoupon(tag,scope.row)"
+                >
+                  {{ tag.name }}
+                </el-tag>
+                <span class="mr15" v-if="scope.row.couponId == null">无</span>
+                <el-button v-if="scope.row.show" size="small" class="mr15" @click="addCoupon(scope.row)">选择优惠券</el-button>
+              </div>
+
+
+              <el-checkbox v-model="scope.row.isProduct" class="ml40 mr20" :disabled="!scope.row.show"  >赠送商品</el-checkbox>
+              <div class="acea-row">
+                <el-tag  v-for="(tag, index) in scope.row.products"
+                        :key="index"
+                        class="mr10 mb10"
+                        :closable="scope.row.show"
+                        :disable-transitions="false"
+                        @close="handleCloseProduct(tag,scope.row)"
+                >{{ tag.name }}</el-tag>
+                <div>
+                  <el-button v-if="scope.row.show"  size="small" type="primary" @click="addGoods(scope.row)">选择商品</el-button>
+                </div>
+              </div>
             </div>
+
+
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150">
@@ -144,12 +213,15 @@ const signObj = {
   id: 0,
   isExperience: true,
   isIntegral: true,
+  isCoupon: true,
+  isProduct: true,
   show: true,
 };
 export default {
   name: 'index',
   data() {
     return {
+      keyNum: 0,
       signForm: {
         day: 0,
         experience: 0,
@@ -219,6 +291,41 @@ export default {
             this.getSignConfig();
           });
     },
+    handleCloseCoupon(tag, row) {
+      row.coupons = []
+      row.couponId = ''
+    },
+    handleCloseProduct(tag, row) {
+      row.products = []
+      row.productId = ''
+    },
+
+
+    addGoods(row) {
+      const _this = this;
+      this.$modalGoodList(
+        function (selectedProducts) {
+            // 假设每个签到配置行只有一个商品奖励
+            _this.$set(row, 'products', selectedProducts);
+            _this.$set(row, 'productId', selectedProducts.map(item => item.id)[0]);
+        },
+        'many',
+        [],
+      );
+    },
+    addCoupon(row) {
+      const _this = this;
+      this.$modalCoupon(
+        'wu',
+        (this.keyNum += 1),
+        row.coupons || [],
+        function (selectedCoupons) {
+          _this.$set(row, 'coupons', selectedCoupons);
+          _this.$set(row, 'couponId', selectedCoupons.map(item => item.id)[0]);
+        },
+        ''
+      );
+    }
   },
 };
 </script>

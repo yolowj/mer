@@ -192,6 +192,19 @@ export function groupColorFilter(status) {
 }
 
 /**
+ * @description 中奖类型
+ */
+export function prizeTypeFilter(status) {
+  const statusMap = {
+    1: '商品',
+    2: '优惠券',
+    3: '积分',
+    4: '谢谢惠顾',
+  };
+  return statusMap[status];
+}
+
+/**
  * @description 一号通tab值
  */
 export function onePassTypeFilter(status) {

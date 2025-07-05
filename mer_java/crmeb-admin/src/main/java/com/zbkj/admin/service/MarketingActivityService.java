@@ -1,8 +1,10 @@
 package com.zbkj.admin.service;
 
 import com.zbkj.common.request.BirthdayPresentRequest;
+import com.zbkj.common.request.MembersDayPresentRequest;
 import com.zbkj.common.request.NewPeoplePresentRequest;
 import com.zbkj.common.response.BirthdayPresentResponse;
+import com.zbkj.common.response.MembersDayPresentResponse;
 import com.zbkj.common.response.NewPeoplePresentResponse;
 
 /**
@@ -45,4 +47,18 @@ public interface MarketingActivityService {
      * 发送生日有礼
      */
     void sendBirthdayPresent();
+
+
+
+    /**
+     * 获取会员日配置
+     */
+    MembersDayPresentResponse getMembersDayConfig();
+
+
+    /**
+     * 编辑新人礼配置
+     * @param request 请求参数
+     */
+    Boolean editMembersDayConfig(MembersDayPresentRequest request);
 }

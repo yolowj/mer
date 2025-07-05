@@ -4,8 +4,10 @@ import com.zbkj.admin.service.MarketingActivityService;
 import com.zbkj.common.annotation.LogControllerAnnotation;
 import com.zbkj.common.enums.MethodType;
 import com.zbkj.common.request.BirthdayPresentRequest;
+import com.zbkj.common.request.MembersDayPresentRequest;
 import com.zbkj.common.request.NewPeoplePresentRequest;
 import com.zbkj.common.response.BirthdayPresentResponse;
+import com.zbkj.common.response.MembersDayPresentResponse;
 import com.zbkj.common.response.NewPeoplePresentResponse;
 import com.zbkj.common.result.CommonResult;
 import io.swagger.annotations.Api;
@@ -76,4 +78,22 @@ public class MarketingActivityController {
         return CommonResult.failed("编辑新人礼配置失败");
     }
 
+
+  //  @PreAuthorize("hasAuthority('platform:marketing:activity:membersDay:present:config')")
+    @ApiOperation(value="获取会员日礼配置")
+    @RequestMapping(value = "/new/people/membersDay/config", method = RequestMethod.GET)
+    public MembersDayPresentResponse getMembersDayConfig() {
+        return marketingActivityService.getMembersDayConfig();
+    }
+
+    @LogControllerAnnotation(intoDB = true, methodType = MethodType.UPDATE, description = "编辑会员日礼配置")
+   /* @PreAuthorize("hasAuthority('platform:marketing:activity:membersDay:present:edit')")*/
+    @ApiOperation(value="编辑会员日礼配置")
+    @RequestMapping(value = "/new/people/membersDay/edit", method = RequestMethod.POST)
+    public CommonResult<String> editMembersDayConfig(@RequestBody @Validated MembersDayPresentRequest request) {
+        if (marketingActivityService.editMembersDayConfig(request)) {
+            return CommonResult.success("编辑会员日礼配置成功");
+        }
+        return CommonResult.failed("编辑会员日礼配置失败");
+    }
 }

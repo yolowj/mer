@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * @version 1.0.0
  * @Date 2024/5/29
  */
-@Component("")
+@Component("MemberExpirationTask")
 public class MemberExpirationTask {
 
     private static final Logger logger = LoggerFactory.getLogger(MemberExpirationTask.class);

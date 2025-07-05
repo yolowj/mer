@@ -26,6 +26,7 @@ import com.zbkj.common.utils.RedisUtil;
 import com.zbkj.common.vo.PaidMemberBenefitsVo;
 import com.zbkj.service.service.*;
 import com.zbkj.service.service.groupbuy.GroupBuyUserService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
  * +----------------------------------------------------------------------
  */
 @Service
+@Slf4j
 public class AsyncServiceImpl implements AsyncService {
 
     private final Logger logger = LoggerFactory.getLogger(AsyncServiceImpl.class);
@@ -219,7 +221,8 @@ public class AsyncServiceImpl implements AsyncService {
             logger.error("异步——订单支付成功拆单处理 | 商户订单信息不存在,orderNo: {}", orderNo);
             return;
         }
-        Boolean execute =  manyMerchantOrderProcessing(order, merchantOrderList);;
+        Boolean execute = manyMerchantOrderProcessing(order, merchantOrderList);
+        ;
         if (!execute) {
             logger.error("异步——订单支付成功拆单处理 | 拆单处理失败，orderNo: {}", orderNo);
             return;
@@ -471,6 +474,7 @@ public class AsyncServiceImpl implements AsyncService {
 
     /**
      * 订单支付成功后冻结处理
+     *
      * @param orderNoList 订单编号列表
      */
     @Async
@@ -501,6 +505,7 @@ public class AsyncServiceImpl implements AsyncService {
 
     /**
      * 订单完成后冻结处理
+     *
      * @param orderNoList 订单编号列表
      */
     @Async
@@ -535,6 +540,7 @@ public class AsyncServiceImpl implements AsyncService {
 
     /**
      * 微信小程序发货上传发货管理
+     *
      * @param orderNo 订单编号
      */
     @Async
@@ -549,6 +555,7 @@ public class AsyncServiceImpl implements AsyncService {
 
     /**
      * 核销订单微信小程序发货上传发货管理
+     *
      * @param orderNo 订单编号
      */
     @Async
@@ -563,8 +570,9 @@ public class AsyncServiceImpl implements AsyncService {
 
     /**
      * 订单积分冻结处理
+     *
      * @param orderNoList 订单编号列表
-     * @param freezeDay 积分冻结天数
+     * @param freezeDay   积分冻结天数
      */
     private void orderIntegralFreezingOperation(List<String> orderNoList, Integer freezeDay) {
         Order order = orderService.getByOrderNo(orderNoList.get(0));
@@ -640,6 +648,7 @@ public class AsyncServiceImpl implements AsyncService {
 
     /**
      * 订单佣金分账冻结处理
+     *
      * @param orderNoList 订单编号列表
      */
     private void orderBrokerageShareFreezingOperation(List<String> orderNoList, Integer freezeDay) {
@@ -713,6 +722,7 @@ public class AsyncServiceImpl implements AsyncService {
 
     /**
      * 订单商户分账冻结处理
+     *
      * @param orderNoList 订单编号列表
      */
     private void orderMerchantShareFreezingOperation(List<String> orderNoList, Integer freezeDay) {
@@ -787,7 +797,7 @@ public class AsyncServiceImpl implements AsyncService {
 
 
         // 商户拆单
-        List<Order> newOrderList =  new ArrayList<>();
+        List<Order> newOrderList = new ArrayList<>();
         List<MerchantOrder> newMerchantOrderList = new ArrayList<>();
         List<OrderDetail> newOrderDetailList = new ArrayList<>();
 
@@ -820,7 +830,7 @@ public class AsyncServiceImpl implements AsyncService {
                     && !order.getType().equals(OrderConstants.ORDER_TYPE_PITUAN)) { // 排除拼团订单
                 newOrder.setStatus(OrderConstants.ORDER_STATUS_AWAIT_VERIFICATION);
             }
-            if(order.getType().equals(OrderConstants.ORDER_TYPE_PITUAN)){ // 拼团订单下单固定状态
+            if (order.getType().equals(OrderConstants.ORDER_TYPE_PITUAN)) { // 拼团订单下单固定状态
                 newOrder.setGroupBuyRecordStatus(GroupBuyRecordEnum.GROUP_BUY_RECORD_ENUM_STATUS_INIT.getCode());
             }
 
@@ -852,10 +862,14 @@ public class AsyncServiceImpl implements AsyncService {
                 e.setRollbackOnly();
                 return Boolean.FALSE;
             }
-            merchantOrderService.removeByIds(merchantOrderList);
+
+
+            merchantOrderService.removeByIds(merchantOrderList.stream().map(MerchantOrder::getId).collect(Collectors.toList()));
             orderService.saveBatch(newOrderList);
             merchantOrderService.saveBatch(newMerchantOrderList);
-            orderDetailService.removeByIds(orderDetailList);
+
+            orderDetailService.removeByIds(orderDetailList.stream().map(OrderDetail::getId).collect(Collectors.toList()));
+
             orderDetailService.saveBatch(newOrderDetailList);
             // 订单日志
             orderStatusService.createLog(order.getOrderNo(), OrderStatusConstants.ORDER_STATUS_PAY_SPLIT, StrUtil.format(OrderStatusConstants.ORDER_LOG_MESSAGE_PAY_SPLIT, order.getOrderNo()));
@@ -871,39 +885,26 @@ public class AsyncServiceImpl implements AsyncService {
         boolean isVipDay = false;
         int vipDayMultiple = 1; // 默认不翻倍
 
-        try {
-            // 获取会员日配置
-            String vipDaySwitch = systemConfigService.getValueByKey("vip_day_switch");
-            String vipDayDates = systemConfigService.getValueByKey("vip_day_dates");
-            String vipDayMultipleStr = systemConfigService.getValueByKey("vip_day_multiple");
-
-            // 检查开关和日期配置
-            if ("true".equals(vipDaySwitch) && StrUtil.isNotBlank(vipDayDates)) {
-                // 解析倍数配置
-                vipDayMultiple = StrUtil.isNotBlank(vipDayMultipleStr) ?
-                        Integer.parseInt(vipDayMultipleStr) : 2;
-
-                // 获取当前日期
-                LocalDate today = LocalDate.now();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd");
-
-                // 检查今天是否是会员日
-                String[] vipDates = vipDayDates.split(",");
-                for (String dateStr : vipDates) {
-                    try {
-                        LocalDate vipDate = LocalDate.parse(dateStr.trim(), formatter);
-                        if (vipDate.equals(today)) {
-                            isVipDay = true;
-                            break;
-                        }
-                    } catch (Exception e) {
-                        // 日期格式错误，跳过
-                    }
+        // 获取会员日配置
+        String MEMBER_PRESENT_SWITCH = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_SWITCH);
+        String MEMBER_PRESENT_DAY = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_DAY);
+        String MEMBER_PRESENT_WEEK = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_WEEK);
+        // 检查开关和日期配置
+        if (StrUtil.isNotBlank(MEMBER_PRESENT_SWITCH) && Constants.COMMON_SWITCH_OPEN.equals(MEMBER_PRESENT_SWITCH)) {
+            if (ObjectUtil.isNotNull(MEMBER_PRESENT_DAY) && Integer.parseInt(MEMBER_PRESENT_DAY) !=0 ) {
+                Integer vipMonth = LocalDate.now().getDayOfMonth();
+                if (vipMonth.compareTo(Integer.parseInt(MEMBER_PRESENT_DAY)) == 0) {
+                    isVipDay = true;
                 }
             }
-        } catch (Exception e) {
-            logger.error("会员日配置解析错误", e);
+            if (ObjectUtil.isNotNull(MEMBER_PRESENT_WEEK) && Integer.parseInt(MEMBER_PRESENT_WEEK) !=0) {
+                Integer vipWeek = LocalDate.now().getDayOfWeek().getValue();
+                if (vipWeek.compareTo(Integer.parseInt(MEMBER_PRESENT_DAY)) == 0) {
+                    isVipDay = true;
+                }
+            }
         }
+
 
         // 比例
         String integralRatioStr = systemConfigService.getValueByKey(SysConfigConstants.CONFIG_KEY_INTEGRAL_RATE_ORDER_GIVE);
@@ -938,7 +939,7 @@ public class AsyncServiceImpl implements AsyncService {
                 }
             } else {
                 // 非付费会员
-                if(userLevel.getIntegralRatio().doubleValue() > 0) {
+                if (userLevel.getIntegralRatio().doubleValue() > 0) {
                     totalIntegral = merchantOrder.getPayPrice().multiply(userLevel.getIntegralRatio()).intValue() + totalExtraIntegral;
                 }
             }

@@ -1,5 +1,6 @@
 package com.zbkj.service.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -83,6 +84,7 @@ public class ProductAttrValueServiceImpl extends ServiceImpl<ProductAttrValueDao
     @Override
     public ProductAttrValue getByIdAndProductIdAndType(Integer id, Integer productId, Integer type, Integer marketingType) {
         LambdaQueryWrapper<ProductAttrValue> lqw = Wrappers.lambdaQuery();
+        if(ObjectUtil.isNotNull(id))
         lqw.eq(ProductAttrValue::getId, id);
         lqw.eq(ProductAttrValue::getProductId, productId);
         lqw.eq(ProductAttrValue::getType, type);

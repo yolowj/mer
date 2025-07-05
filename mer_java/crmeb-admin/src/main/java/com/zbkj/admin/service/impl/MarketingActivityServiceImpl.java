@@ -13,8 +13,10 @@ import com.zbkj.common.model.coupon.Coupon;
 import com.zbkj.common.model.coupon.CouponUser;
 import com.zbkj.common.model.user.User;
 import com.zbkj.common.request.BirthdayPresentRequest;
+import com.zbkj.common.request.MembersDayPresentRequest;
 import com.zbkj.common.request.NewPeoplePresentRequest;
 import com.zbkj.common.response.BirthdayPresentResponse;
+import com.zbkj.common.response.MembersDayPresentResponse;
 import com.zbkj.common.response.NewPeoplePresentResponse;
 import com.zbkj.common.utils.CrmebDateUtil;
 import com.zbkj.common.utils.CrmebUtil;
@@ -254,5 +256,54 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
                 smsService.sendBirthdayPresent(user.getPhone(), "生日礼品—优惠券");
             }
         }
+    }
+
+    @Override
+    public MembersDayPresentResponse getMembersDayConfig() {
+        String MEMBER_PRESENT_SWITCH = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_SWITCH);
+        String MEMBER_PRESENT_DAY = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_DAY);
+        String MEMBER_PRESENT_WEEK = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_WEEK);
+        String MEMBER_PRESENT_COUPON = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_COUPON);
+        MembersDayPresentResponse response = new MembersDayPresentResponse();
+        if (StrUtil.isNotBlank(MEMBER_PRESENT_DAY) ) {
+            response.setSelectedDay(Integer.parseInt(MEMBER_PRESENT_DAY));
+        }
+        if (StrUtil.isNotBlank(MEMBER_PRESENT_WEEK) ) {
+            response.setSelectedWeek(Integer.parseInt(MEMBER_PRESENT_WEEK));
+        }
+
+        boolean newPeopleSwitch = false;
+        if (StrUtil.isNotBlank(MEMBER_PRESENT_SWITCH) && MEMBER_PRESENT_SWITCH.equals(Constants.COMMON_SWITCH_OPEN)) {
+            newPeopleSwitch = true;
+        }
+        response.setMembersDaySwitch(newPeopleSwitch);
+        if (StrUtil.isNotBlank(MEMBER_PRESENT_COUPON)) {
+            List<Integer> couponIdList = CrmebUtil.stringToArray(MEMBER_PRESENT_COUPON);
+            List<Coupon> couponList = couponService.findByIds(couponIdList);
+            response.setCouponList(couponList);
+        }
+        return response;
+    }
+
+    /**
+     * 编辑新人礼配置
+     *
+     * @param request 请求参数
+     */
+    @Override
+    public Boolean editMembersDayConfig(MembersDayPresentRequest request) {
+        String newPeoplePresentSwitch = request.getMembersDaySwitch() ? Constants.COMMON_SWITCH_OPEN : Constants.COMMON_SWITCH_CLOSE;
+        String newPeoplePresentCoupon = "";
+        if (CollUtil.isNotEmpty(request.getCouponIdList())) {
+            newPeoplePresentCoupon = request.getCouponIdList().stream().map(String::valueOf).collect(Collectors.joining(","));
+        }
+        String finalNewPeoplePresentCoupon = newPeoplePresentCoupon;
+        return transactionTemplate.execute(e -> {
+            systemConfigService.updateOrSaveValueByName(SysConfigConstants.MEMBER_PRESENT_SWITCH, newPeoplePresentSwitch);
+            systemConfigService.updateOrSaveValueByName(SysConfigConstants.MEMBER_PRESENT_DAY, String.valueOf(request.getSelectedDay()));
+            systemConfigService.updateOrSaveValueByName(SysConfigConstants.MEMBER_PRESENT_WEEK, String.valueOf(request.getSelectedWeek()));
+            systemConfigService.updateOrSaveValueByName(SysConfigConstants.MEMBER_PRESENT_COUPON, finalNewPeoplePresentCoupon);
+            return Boolean.TRUE;
+        });
     }
 }

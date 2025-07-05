@@ -35,16 +35,41 @@ public class SignConfigRequest implements Serializable {
     private Integer day;
 
     @ApiModelProperty(value = "是否奖励积分", required = true)
-    private Boolean isIntegral;
+    private Boolean isIntegral = false;
 
     @ApiModelProperty(value = "签到积分", required = true)
     private Integer integral;
 
     @ApiModelProperty(value = "是否奖励经验", required = true)
-    private Boolean isExperience;
+    private Boolean isExperience = false;
 
     @ApiModelProperty(value = "签到经验", required = true)
     private Integer experience;
+
+
+    @ApiModelProperty(value = "是否优惠券", required = true)
+    private Boolean isCoupon = false;
+
+    @ApiModelProperty(value = "优惠券id", required = true)
+    private Integer couponId;
+
+    @ApiModelProperty(value = "是否奖励商品", required = true)
+    private Boolean isProduct;
+
+    @ApiModelProperty(value = "签到经验", required = true)
+    private Integer productId;
+
+    @ApiModelProperty(value = "是否补签扣除积分", required = true)
+    private Boolean isSupIntegral = false;
+
+    @ApiModelProperty(value = "补签扣除积分", required = true)
+    private Integer supIntegral;
+
+    @ApiModelProperty(value = "是否现在周补签次数", required = true)
+    private Boolean isSupNum;
+
+    @ApiModelProperty(value = "签到经验", required = true)
+    private Integer supNum;
 
     @ApiModelProperty(value = "签到规则说明，基础签到配置专用")
     private String signRuleDescription;

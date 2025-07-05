@@ -313,7 +313,14 @@ public class SysConfigConstants {
     public static final String BIRTHDAY_PRESENT_SWITCH = "birthday_present_switch";
     /** 生日有礼—优惠券 */
     public static final String BIRTHDAY_PRESENT_COUPON = "birthday_present_coupon";
-
+    /** 会员日礼—开关 */
+    public static final String MEMBER_PRESENT_SWITCH = "MEMBER_PRESENT_SWITCH";
+    /** 会员日礼—优惠券 */
+    public static final String MEMBER_PRESENT_COUPON = "MEMBER_PRESENT_COUPON";
+    /** 会员日-日 */
+    public static final String MEMBER_PRESENT_DAY = "MEMBER_PRESENT_DAY";
+    /** 会员日-周 */
+    public static final String MEMBER_PRESENT_WEEK = "MEMBER_PRESENT_WEEK";
     /** 公众号-浏览访问方式 */
     public static final String WECHAT_PUBLIC_LOGIN_TYPE = "wechat_browser_visit";
     /** 小程序—手机号授权验证类型 */

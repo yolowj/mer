@@ -110,7 +110,7 @@ public class OrderDetail implements Serializable {
     @ApiModelProperty(value = "基础类型：0=普通商品,1-积分商品,2-虚拟商品,4=视频号,5-云盘商品,6-卡密商品")
     private Integer productType;
 
-    @ApiModelProperty(value = "营销类型：0=基础商品,1=秒杀,2=拼团")
+    @ApiModelProperty(value = "营销类型：0=基础商品,1=秒杀,2=拼团,3=签到,4=抽奖")
     private Integer productMarketingType;
 
     @ApiModelProperty(value = "一级返佣金额")

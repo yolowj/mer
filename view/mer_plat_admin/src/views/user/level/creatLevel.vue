@@ -51,7 +51,7 @@
           step-strictly
         ></el-input-number>
       </el-form-item>
-      <el-form-item label="赠送优惠券：" prop="proCoupon" clearable>
+      <el-form-item label="赠送优惠券：" prop="proCoupon">
         <div class="acea-row">
           <el-tag
             v-for="(tag, index) in formValidate.coupons"
@@ -238,8 +238,8 @@ export default {
         (this.keyNum += 1),
         this.formValidate.coupons,
         function (row) {
-          _this.formValidate.couponIds = [];
-          _this.formValidate.coupons = row;
+          _this.$set(_this.formValidate, 'couponIds', []); // 确保响应式
+          _this.$set(_this.formValidate, 'coupons', row); // 确保响应式
           row.map((item) => {
             _this.formValidate.couponIds.push(item.id);
           });

@@ -48,16 +48,20 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="昵称" min-width="150" :show-overflow-tooltip="true">
+        <el-table-column label="昵称" min-width="100" :show-overflow-tooltip="true">
           <template slot-scope="scope">
-            <span>{{ scope.row.nickname }}</span>
+            <span>{{ scope.row.userName }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="中奖类型" prop="prizeType" min-width="100"> </el-table-column>
+        <el-table-column prop="prizeType" label="奖品类型" min-width="100">
+          <template slot-scope="{ row }">
+            <span>{{ row.prizeType | prizeTypeFilter }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="奖品" prop="prizeValue" min-width="100" :show-overflow-tooltip="true">
         </el-table-column>
         <el-table-column prop="costPoints" label="消耗积分" min-width="100" />
-        <el-table-column label="抽奖日期" width="90" fixed="right">
+        <el-table-column label="抽奖日期" width="120" fixed="right">
           <template slot-scope="scope">
             <span>{{ scope.row.createTime }}</span>
           </template>

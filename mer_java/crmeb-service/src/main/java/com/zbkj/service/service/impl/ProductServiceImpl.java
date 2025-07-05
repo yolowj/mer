@@ -3820,13 +3820,13 @@ public class ProductServiceImpl extends ServiceImpl<ProductDao, Product>
      */
     @Override
     public PageInfo<IntegralProductPageResponse> getIntegralProductPageByPlat(IntegralProductPageSearchRequest request) {
-        User user = userService.getInfo();
+       // User user = userService.getInfo();
         LambdaQueryWrapper<Product> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Product::getMerId, 0);
         lqw.eq(Product::getIsShow, request.getIsShow());
         lqw.eq(Product::getIsDel, 0);
         lqw.eq(Product::getType, ProductConstants.PRODUCT_TYPE_INTEGRAL);
-        lqw.gt(Product::getUserLevel,user.getLevel());
+       // lqw.gt(Product::getUserLevel,user.getLevel());
 
         //关键字搜索
         if (StrUtil.isNotBlank(request.getKeywords())) {

@@ -700,7 +700,7 @@ public class CouponServiceImpl extends ServiceImpl<CouponDao, Coupon> implements
             lqw.like(Coupon::getName, keywords);
         }
         lqw.and(i -> i.eq(Coupon::getIsLimited, 0).or(o -> o.gt(Coupon::getLastTotal, 0)));
-        lqw.and(i -> i.eq(Coupon::getIsTimeReceive, 0).or(o -> o.le(Coupon::getReceiveStartTime, now).ge(Coupon::getReceiveEndTime, now)));
+        lqw.and(    i -> i.eq(Coupon::getIsTimeReceive, 0).or (o -> o.le(Coupon::getReceiveStartTime, now).ge(Coupon::getReceiveEndTime, now)));
         lqw.orderByDesc(Coupon::getCreateTime);
         List<Coupon> list = dao.selectList(lqw);
         return CommonPage.copyPageInfo(page, list);

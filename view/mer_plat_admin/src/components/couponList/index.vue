@@ -153,7 +153,7 @@ export default {
     },
   },
   mounted() {
-    this.multipleSelectionAll = [...this.couponData];
+    this.multipleSelectionAll = []//[...this.couponData];
     this.tableFrom.page = 1;
     this.getList();
   },
@@ -204,6 +204,7 @@ export default {
     },
     // 列表
     getList(num) {
+      console.log('this.tableFrom', this.tableFrom)
       this.listLoading = true;
       this.tableFrom.page = num ? num : this.tableFrom.page;
       canSendListApi(this.tableFrom)

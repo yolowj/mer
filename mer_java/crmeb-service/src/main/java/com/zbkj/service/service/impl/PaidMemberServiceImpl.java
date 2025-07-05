@@ -205,27 +205,26 @@ public class PaidMemberServiceImpl implements PaidMemberService {
     @Override
     public void memberHappyProcsssing() {
         boolean  isVipDay = false ;
-        try {
-            // 获取会员日配置
-            String vipDaySwitch = systemConfigService.getValueByKey("vip_day_switch");
-            String vipDayDates = systemConfigService.getValueByKey("vip_day_dates");
-
-            // 检查开关和日期配置
-            if ("true".equals(vipDaySwitch) && StrUtil.isNotBlank(vipDayDates) ) {
-                // 获取当前日期
+        // 获取会员日配置
+        String MEMBER_PRESENT_SWITCH = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_SWITCH);
+        String MEMBER_PRESENT_DAY = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_DAY);
+        String MEMBER_PRESENT_WEEK = systemConfigService.getValueByKey(SysConfigConstants.MEMBER_PRESENT_WEEK);
+        // 检查开关和日期配置
+        if (StrUtil.isNotBlank(MEMBER_PRESENT_SWITCH) && Constants.COMMON_SWITCH_OPEN.equals(MEMBER_PRESENT_SWITCH)) {
+            if (ObjectUtil.isNotNull(MEMBER_PRESENT_DAY) && Integer.parseInt(MEMBER_PRESENT_DAY) !=0 ) {
                 Integer vipMonth = LocalDate.now().getDayOfMonth();
-                Integer vipWeek = LocalDate.now().getDayOfWeek().getValue();
-                String v1 = vipDayDates.split(",")[0];
-                if(Integer.parseInt(v1)==vipMonth) isVipDay = true;
-                // 检查今天是否是会员日
-                if(vipDayDates.split(",").length>1){
-                    String v2 = vipDayDates.split(",")[1];
-                    if(Integer.parseInt(v2)==vipWeek) isVipDay = true;
+                if (vipMonth.compareTo(Integer.parseInt(MEMBER_PRESENT_DAY)) == 0) {
+                    isVipDay = true;
                 }
             }
-        } catch (Exception e) {
-            log.error("会员日配置错误", e);
+            if (ObjectUtil.isNotNull(MEMBER_PRESENT_WEEK) && Integer.parseInt(MEMBER_PRESENT_WEEK) !=0) {
+                Integer vipWeek = LocalDate.now().getDayOfWeek().getValue();
+                if (vipWeek.compareTo(Integer.parseInt(MEMBER_PRESENT_DAY)) == 0) {
+                    isVipDay = true;
+                }
+            }
         }
+
         if(isVipDay){
             // 构建图文消息(需先上传素材)
             WxMpMassTagMessage massMessage = new WxMpMassTagMessage();

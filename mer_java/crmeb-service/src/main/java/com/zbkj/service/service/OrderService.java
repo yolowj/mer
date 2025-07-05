@@ -5,8 +5,11 @@ import com.github.pagehelper.PageInfo;
 import com.zbkj.common.model.admin.SystemAdmin;
 import com.zbkj.common.model.order.Order;
 import com.zbkj.common.model.order.OrderDetail;
+import com.zbkj.common.model.product.Product;
+import com.zbkj.common.model.user.User;
 import com.zbkj.common.request.*;
 import com.zbkj.common.response.*;
+import com.zbkj.common.vo.FreeOrderInfoVo;
 import com.zbkj.common.vo.LogisticsResultVo;
 
 import java.math.BigDecimal;
@@ -356,4 +359,10 @@ public interface OrderService extends IService<Order> {
      * @return 执行结果
      */
     Order getMerchantOrderNoByPtOrderNoForGroupBuy(String ptOrderNo);
+
+
+    OrderNoResponse createOrderFree(CreateFreeOrderRequest orderRequest, FreeOrderInfoVo orderInfoVo, User user);
+
+
+    OrderNoResponse orderFree(Product product, User user);
 }

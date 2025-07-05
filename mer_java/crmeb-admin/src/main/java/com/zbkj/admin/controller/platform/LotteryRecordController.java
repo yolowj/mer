@@ -5,11 +5,14 @@ import com.zbkj.common.model.prize.LotteryRecord;
 import com.zbkj.common.model.prize.LotteryRecordRequest;
 import com.zbkj.common.model.prize.PrizeDrawRequest;
 import com.zbkj.common.model.product.Product;
+import com.zbkj.common.model.user.User;
 import com.zbkj.common.page.CommonPage;
 import com.zbkj.common.result.CommonResult;
+import com.zbkj.service.dao.UserDao;
 import com.zbkj.service.service.CouponService;
 import com.zbkj.service.service.LotteryRecordService;
 import com.zbkj.service.service.ProductService;
+import com.zbkj.service.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +40,8 @@ public class LotteryRecordController {
 
     @Autowired
     private CouponService couponService;
+    @Autowired
+    private UserService userService;
 
     /**
      * 分页显示抽奖记录表
@@ -49,7 +54,8 @@ public class LotteryRecordController {
     public CommonResult<CommonPage<LotteryRecord>> getList(@Validated PrizeDrawRequest prizeDrawRequest) {
         CommonPage<LotteryRecord> lotteryRecordCommonPage = CommonPage.restPage(lotteryRecordService.getList(prizeDrawRequest));
         lotteryRecordCommonPage.getList().forEach(lotteryRecord -> {
-
+            User user = userService.getById(lotteryRecord.getUserId());
+            lotteryRecord.setUserName(user.getRealName());
             if(lotteryRecord.getPrizeType() == 1) {
                 Product product = productService.getById(lotteryRecord.getPrizeValue());
                 if(product != null) {

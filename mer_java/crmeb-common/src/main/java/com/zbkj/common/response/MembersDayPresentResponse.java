@@ -1,6 +1,6 @@
 package com.zbkj.common.response;
 
-
+import com.zbkj.common.model.coupon.Coupon;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -9,10 +9,9 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 /**
- * 签到页信息响应对象
+ * 新人礼响应对象
  * +----------------------------------------------------------------------
  * | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
  * +----------------------------------------------------------------------
@@ -26,32 +25,22 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@ApiModel(value = "SignPageInfoResponse对象", description = "签到页信息响应对象")
-public class SignPageInfoResponse implements Serializable {
+@ApiModel(value = "MembersDayPresentResponse对象", description = "会员日响应对象")
+public class MembersDayPresentResponse implements Serializable {
 
-    private static final long serialVersionUID = 3285713110515203543L;
+    private static final long serialVersionUID = -4585094537501770138L;
 
-    @ApiModelProperty(value = "签到日期列表")
-    private List<String> signDateList;
+    @ApiModelProperty(value = "会员日响应")
+    private Boolean membersDaySwitch;
 
-    @ApiModelProperty(value = "连续签到天数")
-    private Integer signDayNum;
 
-    @ApiModelProperty(value = "今日获得积分")
-    private Integer integral;
+    @ApiModelProperty(value = "会员日")
+    private Integer selectedWeek;
 
-    @ApiModelProperty(value = "今日获得经验")
-    private Integer experience;
+    @ApiModelProperty(value = "会员周")
+    private Integer selectedDay;
 
-    @ApiModelProperty(value = "签到规则")
-    private String signRule;
+    @ApiModelProperty(value = "新人礼优惠券列表")
+    private List<Coupon> couponList;
 
-    @ApiModelProperty(value = "是否展示提示")
-    private Boolean isTip;
-
-    @ApiModelProperty(value = "商品名称")
-    private String prodName;
-
-    @ApiModelProperty(value = "优惠券名称")
-    private String couponName;
 }

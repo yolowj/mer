@@ -54,6 +54,11 @@ public class LotteryRecord implements Serializable {
     @ApiModelProperty(value = "0:未领取 1:已领取 2:已过期")
     private Integer status;
 
+    @ApiModelProperty(value = "用户名")
+    @TableField(exist = false)
+    private String userName;
+
+
     @TableField(exist = false)
     private String productName;
 

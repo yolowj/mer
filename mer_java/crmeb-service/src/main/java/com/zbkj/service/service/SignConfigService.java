@@ -53,4 +53,6 @@ public interface SignConfigService extends IService<SignConfig> {
      * @return Boolean
      */
     Boolean editAwardConfig(SignConfigRequest request);
+
+    SignConfig getByDay(Integer day);
 }

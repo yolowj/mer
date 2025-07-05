@@ -6,11 +6,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zbkj.common.exception.CrmebException;
+import com.zbkj.common.model.coupon.Coupon;
+import com.zbkj.common.model.product.Product;
 import com.zbkj.common.model.sgin.SignConfig;
 import com.zbkj.common.request.SignConfigRequest;
 import com.zbkj.common.result.CommonResultCode;
 import com.zbkj.common.result.SystemConfigResultCode;
 import com.zbkj.service.dao.SignConfigDao;
+import com.zbkj.service.service.CouponService;
+import com.zbkj.service.service.ProductService;
 import com.zbkj.service.service.SignConfigService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +41,12 @@ public class SignConfigServiceImpl extends ServiceImpl<SignConfigDao, SignConfig
 
     @Resource
     private SignConfigDao dao;
+
+
+    @Autowired
+    private CouponService couponService;
+    @Autowired
+    private ProductService productService;
 
     /**
      * 获取全部配置列表
@@ -66,18 +76,33 @@ public class SignConfigServiceImpl extends ServiceImpl<SignConfigDao, SignConfig
         return save(signConfig);
     }
 
+
     /**
      * 获取备注
      */
     private String getMark(SignConfig signConfig) {
         String mark = "";
-        if (signConfig.getIsIntegral() && signConfig.getIsExperience()) {
-            mark = StrUtil.format("赠送{}积分，赠送{}经验", signConfig.getIntegral(), signConfig.getExperience());
-        } else if (signConfig.getIsIntegral()) {
-            mark = StrUtil.format("赠送{}积分", signConfig.getIntegral());
-        } else if (signConfig.getIsExperience()) {
-            mark = StrUtil.format("赠送{}经验", signConfig.getExperience());
+
+        if (signConfig.getIsIntegral()) {
+            mark += StrUtil.format("赠送{}积分;", signConfig.getIntegral());
         }
+        if (signConfig.getIsExperience()) {
+            mark += StrUtil.format("赠送{}经验;", signConfig.getExperience());
+        }
+        if (signConfig.getIsCoupon()) {
+            if(ObjectUtil.isNull(signConfig.getCouponId()))
+                throw new CrmebException("请选择优惠券");
+            Coupon coupon = couponService.getById(signConfig.getCouponId());
+            mark += StrUtil.format("赠送{}优惠券;", coupon.getName());
+        }
+
+        if (signConfig.getIsProduct()) {
+            if(ObjectUtil.isNull(signConfig.getCouponId()))
+                throw new CrmebException("请选择商品优惠券");
+            Product product = productService.getById(signConfig.getProductId());
+            mark += StrUtil.format("赠送{}商品", product.getName());
+        }
+
         return mark;
     }
 
@@ -111,6 +136,10 @@ public class SignConfigServiceImpl extends ServiceImpl<SignConfigDao, SignConfig
         signConfig.setIntegral(request.getIntegral());
         signConfig.setIsExperience(request.getIsExperience());
         signConfig.setExperience(request.getExperience());
+        signConfig.setIsSupIntegral(request.getIsSupIntegral());
+        signConfig.setSupIntegral(request.getSupIntegral());
+        signConfig.setIsSupNum(request.getIsSupNum());
+        signConfig.setSupNum(request.getSupNum());
         return updateById(signConfig);
     }
 
@@ -144,7 +173,8 @@ public class SignConfigServiceImpl extends ServiceImpl<SignConfigDao, SignConfig
      * 通过连续签到天数获取
      * @param day 连续签到天数
      */
-    private SignConfig getByDay(Integer day) {
+    @Override
+    public SignConfig getByDay(Integer day) {
         LambdaQueryWrapper<SignConfig> lqw = Wrappers.lambdaQuery();
         lqw.eq(SignConfig::getDay, day);
         lqw.eq(SignConfig::getIsDel, false);
