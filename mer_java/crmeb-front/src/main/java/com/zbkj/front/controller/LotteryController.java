@@ -107,7 +107,7 @@ public class LotteryController {
 
 
       @ApiOperation(value = "领奖")
-    @RequestMapping(value = "/supply", method = RequestMethod.GET)
+    @RequestMapping(value = "/receive", method = RequestMethod.GET)
     public CommonResult<Object> getWechatPublicAgreeInfo(@RequestParam(value = "id") Integer id) {
 
           lotteryService.supply(id);

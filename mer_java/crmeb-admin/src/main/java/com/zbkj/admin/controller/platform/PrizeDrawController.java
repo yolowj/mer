@@ -115,7 +115,10 @@ public class PrizeDrawController {
         PrizeDraw prizeDraw = new PrizeDraw();
         BeanUtils.copyProperties(prizeDrawRequest, prizeDraw);
         prizeDraw.setId(id);
-
+        if("1".equals(prizeDraw.getType())){
+            Product product = productService.getById(prizeDraw.getValue());
+            prizeDraw.setImg(product.getImage());
+        }
         if(prizeDrawService.updateById(prizeDraw)) {
             return CommonResult.success();
         } else {

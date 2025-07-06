@@ -97,8 +97,8 @@ public class SignConfigServiceImpl extends ServiceImpl<SignConfigDao, SignConfig
         }
 
         if (signConfig.getIsProduct()) {
-            if(ObjectUtil.isNull(signConfig.getCouponId()))
-                throw new CrmebException("请选择商品优惠券");
+            if(ObjectUtil.isNull(signConfig.getProductId()))
+                throw new CrmebException("请选择商品");
             Product product = productService.getById(signConfig.getProductId());
             mark += StrUtil.format("赠送{}商品", product.getName());
         }
