@@ -64,31 +64,14 @@ public class LottertyServiceImpl implements LotteryService {
     private TransactionTemplate transactionTemplate;
     @Autowired
     private UserIntegralRecordService userIntegralRecordService;
-    @Autowired
-    private MerchantService merchantService;
-    @Autowired
-    private SystemAttachmentService systemAttachmentService;
-    @Autowired
-    private ProductAttrValueService productAttrValueService;
-    @Autowired
-    private MerchantOrderService merchantOrderService;
+
     @Autowired
     private OrderService orderService;
-    @Autowired
-    private OrderDetailService orderDetailService;
-    @Autowired
-    private OrderStatusService orderStatusService;
-    @Autowired
-    private CartService cartService;
-    @Autowired
-    private AsyncService asyncService;
-
-    private FrontOrderService frontOrderService;
 
 
     @Override
     public void supply(Integer id) {
-        LotteryRecord lotteryRecord = lotteryRecordService.getOne(new LambdaQueryWrapper<LotteryRecord>().eq(LotteryRecord::getPrizeId, id));
+        LotteryRecord lotteryRecord = lotteryRecordService.getOne(new LambdaQueryWrapper<LotteryRecord>().eq(LotteryRecord::getId, id).eq(LotteryRecord::getStatus, 0));
 
         if (ObjectUtil.isNotNull(lotteryRecord)) {
             if (lotteryRecord.getStatus() == 1) {
@@ -128,6 +111,7 @@ public class LottertyServiceImpl implements LotteryService {
                 User user = userService.getById(lotteryRecord.getUserId());
                 //积分领取
                 execute = transactionTemplate.execute(e -> {
+
                     userService.updateIntegral(user.getIntegral(), prizeDraw.getValue(), Constants.OPERATION_TYPE_ADD);
                     UserIntegralRecord integralRecord = new UserIntegralRecord();
                     integralRecord.setUid(user.getId());
@@ -147,6 +131,8 @@ public class LottertyServiceImpl implements LotteryService {
             }
 
 
+            lotteryRecord.setStatus(1);
+            lotteryRecordService.updateById(lotteryRecord);
         } else {
             throw new CrmebException("抽奖记录不存在");
         }

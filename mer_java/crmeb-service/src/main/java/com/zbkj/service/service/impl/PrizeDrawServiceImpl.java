@@ -189,10 +189,6 @@ public class PrizeDrawServiceImpl extends ServiceImpl<PrizeDrawDao, PrizeDraw> i
                 // 3.5 记录抽奖结果
                 recordLotteryResult(userId, selectedPrize);
 
-
-                // 3.5 记录抽奖结果
-                recordLotteryResult(userId, selectedPrize);
-
                 log.info("用户 {} 抽中奖品: {} (重试次数: {})",
                         userId, selectedPrize.getCouponName(), retryCount);
             } else {
@@ -217,6 +213,7 @@ public class PrizeDrawServiceImpl extends ServiceImpl<PrizeDrawDao, PrizeDraw> i
                 }
             }
         }
+
 
         if (selectedPrize == null) {
             log.error("用户 {} 抽奖失败，达到最大重试次数 {}", userId, MAX_RETRIES);
@@ -279,7 +276,7 @@ public class PrizeDrawServiceImpl extends ServiceImpl<PrizeDrawDao, PrizeDraw> i
         record.setPrizeType(prize.getType());
         record.setPrizeValue(prize.getValue());
         //record.setCostPoints(prize.getCostPoints());
-        record.setStatus(1);
+        record.setStatus(0);
         record.setCreateTime(new Date());
         lotteryRecordService.save(record);
     }

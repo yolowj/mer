@@ -2,6 +2,7 @@ package com.zbkj.common.result;
 
 import com.zbkj.common.exception.CrmebException;
 import com.zbkj.common.vo.MyRecord;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.Map;
  * | Author: CRMEB Team <admin@crmeb.com>
  * +----------------------------------------------------------------------
  */
+@Slf4j
 public class CommonResult<T> implements Serializable {
 
     private static final long serialVersionUID = -6630747483482976634L;

@@ -1,9 +1,9 @@
 package com.zbkj.front.controller;
 
+import com.zbkj.common.annotation.LogControllerAnnotation;
+import com.zbkj.common.enums.MethodType;
 import com.zbkj.common.model.coupon.Coupon;
-import com.zbkj.common.model.prize.LotteryRecord;
-import com.zbkj.common.model.prize.PrizeDraw;
-import com.zbkj.common.model.prize.PrizeDrawRequest;
+import com.zbkj.common.model.prize.*;
 import com.zbkj.common.model.product.Product;
 import com.zbkj.common.page.CommonPage;
 import com.zbkj.common.response.LotteryResponse;
@@ -17,10 +17,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -105,20 +102,13 @@ public class LotteryController {
 
 
 
-
-      @ApiOperation(value = "领奖")
-    @RequestMapping(value = "/receive", method = RequestMethod.GET)
-    public CommonResult<Object> getWechatPublicAgreeInfo(@RequestParam(value = "id") Integer id) {
-
-          lotteryService.supply(id);
-
-
+    @LogControllerAnnotation(intoDB = true, methodType = MethodType.UPDATE, description = "领奖")
+    @ApiOperation(value = "领奖")
+    @RequestMapping(value = "/receive", method = RequestMethod.POST)
+    public CommonResult<Object> receivePrizeDraw(@RequestBody ReceivePrizeRequest request) {
+          lotteryService.supply(request.getId());
           return CommonResult.success().setMessage("领取成功");
     }
-
-
-
-
 
 
 }
