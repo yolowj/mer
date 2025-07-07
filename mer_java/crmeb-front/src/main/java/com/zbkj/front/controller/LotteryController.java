@@ -54,17 +54,21 @@ public class LotteryController {
         CommonPage<LotteryRecord> lotteryRecordCommonPage = CommonPage.restPage(prizeDrawService.getLotteryRecordList(prizeDrawRequest));
         lotteryRecordCommonPage.getList().forEach(lotteryRecord -> {
 
-            if(lotteryRecord.getPrizeType() == 1) {
+            if (lotteryRecord.getPrizeType() == 1) {
                 Product product = productService.getById(lotteryRecord.getPrizeValue());
-                if(product != null) {
+                if (product != null) {
                     lotteryRecord.setProductName(product.getName());
                 }
             }
-            if(lotteryRecord.getPrizeType() == 2) {
+            if (lotteryRecord.getPrizeType() == 2) {
                 Coupon coupon = couponService.getById(lotteryRecord.getPrizeValue());
-                if(coupon != null) {
+                if (coupon != null) {
                     lotteryRecord.setCouponName(coupon.getName());
                 }
+            } else if (lotteryRecord.getPrizeType() == 3) {
+                lotteryRecord.setProductName(lotteryRecord.getPrizeValue() + "积分");
+            }else if (lotteryRecord.getPrizeType() == 3) {
+                lotteryRecord.setProductName("谢谢惠顾");
             }
         });
         return CommonResult.success(lotteryRecordCommonPage);
@@ -86,6 +90,10 @@ public class LotteryController {
                   if(coupon != null) {
                       prizeDraw.setCouponName(coupon.getName());
                   }
+              }else if (prizeDraw.getType() == 3) {
+                  prizeDraw.setProductName(prizeDraw.getValue() + " 积分");
+              }else if (prizeDraw.getType() == 3) {
+                  prizeDraw.setProductName("谢谢惠顾");
               }
           });
         return CommonResult.success(prizeDrawList);

@@ -110,8 +110,7 @@ public class LottertyServiceImpl implements LotteryService {
             } else if (prizeDraw.getType() == 3) {
                 User user = userService.getById(lotteryRecord.getUserId());
                 //积分领取
-                execute = transactionTemplate.execute(e -> {
-
+                transactionTemplate.execute(e -> {
                     userService.updateIntegral(user.getIntegral(), prizeDraw.getValue(), Constants.OPERATION_TYPE_ADD);
                     UserIntegralRecord integralRecord = new UserIntegralRecord();
                     integralRecord.setUid(user.getId());
