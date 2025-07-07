@@ -44,13 +44,10 @@
         <el-table-column prop="num" label="剩余数量" min-width="130" />
         <el-table-column prop="status" label="类型" min-width="150" :show-overflow-tooltip="true">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.status == 0">已生效</el-tag>
-            <el-tag v-if="scope.row.status == 1">已禁用</el-tag>
+            <el-tag v-if="scope.row.status == 0">已禁用</el-tag>
+            <el-tag v-if="scope.row.status == 1">已生效</el-tag>
           </template>
         </el-table-column>
-
-
-
 
 
         <el-table-column prop="createTime" label="创建时间" min-width="130" />

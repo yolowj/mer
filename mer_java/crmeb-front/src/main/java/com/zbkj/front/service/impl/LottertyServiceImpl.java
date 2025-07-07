@@ -86,7 +86,7 @@ public class LottertyServiceImpl implements LotteryService {
 
             // 1：商品，2：优惠券，3：积分，4：谢谢惠顾
             if (prizeDraw.getType() == 1) {
-                Product product = productService.getById(lotteryRecord.getPrizeId());
+                Product product = productService.getById(lotteryRecord.getPrizeValue());
                 if (product.getStock() <= 0) {
                     throw new CrmebException("商品库存不足，请联系管理员补库存~！");
                 }
